@@ -1,0 +1,18 @@
+Index: libarchive/archive_platform.h
+===================================================================
+--- libarchive/archive_platform.h	(revision 888)
++++ libarchive/archive_platform.h	(working copy)
+@@ -65,10 +65,10 @@
+ #endif
+ 
+ /* Try to get standard C99-style integer type definitions. */
+-#if HAVE_INTTYPES_H
++#if HAVE_STDINT_H
++#include <stdint.h>
++#elif HAVE_INTTYPES_H
+ #include <inttypes.h>
+-#elif HAVE_STDINT_H
+-#include <stdint.h>
+ #endif
+ 
+ /* Some platforms lack the standard *_MAX definitions. */

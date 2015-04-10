@@ -1,0 +1,122 @@
+diff -urN --binary -x builds -x buildd libarchive-3.0.2.orig/libarchive/archive_windows.c libarchive-3.0.2/libarchive/archive_windows.c
+--- libarchive-3.0.2.orig/libarchive/archive_windows.c	2011-12-24 18:56:28.000000000 +0100
++++ libarchive-3.0.2/libarchive/archive_windows.c	2011-12-27 16:55:00.625101100 +0100
+@@ -235,19 +235,7 @@
+ int
+ __la_fcntl(int fd, int cmd, int val)
+ {
+-	HANDLE handle;
+-
+-	handle = (HANDLE)_get_osfhandle(fd);
+-	if (GetFileType(handle) == FILE_TYPE_PIPE) {
+-		if (cmd == F_SETFL && val == 0) {
+-			DWORD mode = PIPE_WAIT;
+-			if (SetNamedPipeHandleState(
+-			    handle, &mode, NULL, NULL) != 0)
+-				return (0);
+-		}
+-	}
+-	errno = EINVAL;
+-	return (-1);
++	return 0;
+ }
+ 
+ /* This can exceed MAX_PATH limitation. */
+diff -urN --binary -x builds -x buildd libarchive-3.0.2.orig/libarchive/filter_fork_windows.c libarchive-3.0.2/libarchive/filter_fork_windows.c
+--- libarchive-3.0.2.orig/libarchive/filter_fork_windows.c	2011-12-24 18:56:28.000000000 +0100
++++ libarchive-3.0.2/libarchive/filter_fork_windows.c	2011-12-27 16:53:52.188563700 +0100
+@@ -32,69 +32,73 @@
+ pid_t
+ __archive_create_child(const char *path, int *child_stdin, int *child_stdout)
+ {
+-	HANDLE childStdout[2], childStdin[2], childStdinWr, childStdoutRd;
++	HANDLE childStdout[2], childStdin[2],childStderr;
+ 	SECURITY_ATTRIBUTES secAtts;
+ 	STARTUPINFO staInfo;
+ 	PROCESS_INFORMATION childInfo;
+ 	char cmd[MAX_PATH];
+-	DWORD mode;
+ 
+ 	secAtts.nLength = sizeof(SECURITY_ATTRIBUTES);
+ 	secAtts.bInheritHandle = TRUE;
+ 	secAtts.lpSecurityDescriptor = NULL;
+ 	if (CreatePipe(&childStdout[0], &childStdout[1], &secAtts, 0) == 0)
+ 		goto fail;
+-	if (DuplicateHandle(GetCurrentProcess(), childStdout[0],
+-	    GetCurrentProcess(), &childStdoutRd, 0, FALSE,
+-	    DUPLICATE_SAME_ACCESS) == 0) {
++	if (!SetHandleInformation(childStdout[0], HANDLE_FLAG_INHERIT, 0))
++	{
+ 		CloseHandle(childStdout[0]);
+ 		CloseHandle(childStdout[1]);
+ 		goto fail;
+ 	}
+-	CloseHandle(childStdout[0]);
+-
+ 	if (CreatePipe(&childStdin[0], &childStdin[1], &secAtts, 0) == 0) {
+-		CloseHandle(childStdoutRd);
++		CloseHandle(childStdout[0]);
+ 		CloseHandle(childStdout[1]);
+ 		goto fail;
+ 	}
+-
+-	if (DuplicateHandle(GetCurrentProcess(), childStdin[1],
+-	    GetCurrentProcess(), &childStdinWr, 0, FALSE,
++	if (!SetHandleInformation(childStdin[1], HANDLE_FLAG_INHERIT, 0))
++	{
++		CloseHandle(childStdout[0]);
++		CloseHandle(childStdout[1]);
++		CloseHandle(childStdin[0]);
++		CloseHandle(childStdin[1]);
++		goto fail;
++	}
++	if (DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_ERROR_HANDLE),
++	    GetCurrentProcess(), &childStderr, 0, TRUE,
+ 	    DUPLICATE_SAME_ACCESS) == 0) {
+-		CloseHandle(childStdoutRd);
++		CloseHandle(childStdout[0]);
+ 		CloseHandle(childStdout[1]);
+ 		CloseHandle(childStdin[0]);
+ 		CloseHandle(childStdin[1]);
+ 		goto fail;
+ 	}
+-	CloseHandle(childStdin[1]);
+ 
+ 	memset(&staInfo, 0, sizeof(staInfo));
+ 	staInfo.cb = sizeof(staInfo);
++	staInfo.hStdError = childStderr;
+ 	staInfo.hStdOutput = childStdout[1];
+ 	staInfo.hStdInput = childStdin[0];
+ 	staInfo.wShowWindow = SW_HIDE;
+-	staInfo.dwFlags = STARTF_USEFILLATTRIBUTE | STARTF_USECOUNTCHARS |
+-	    STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
++	staInfo.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+ 	strncpy(cmd, path, sizeof(cmd)-1);
+ 	cmd[sizeof(cmd)-1] = '\0';
+ 	if (CreateProcessA(NULL, cmd, NULL, NULL, TRUE, 0, NULL, NULL,
+ 	    &staInfo, &childInfo) == 0) {
+-		CloseHandle(childStdoutRd);
++		CloseHandle(childStdout[0]);
+ 		CloseHandle(childStdout[1]);
+ 		CloseHandle(childStdin[0]);
+-		CloseHandle(childStdinWr);
++		CloseHandle(childStdin[1]);
++		CloseHandle(childStderr);
+ 		goto fail;
+ 	}
+ 	WaitForInputIdle(childInfo.hProcess, INFINITE);
+ 	CloseHandle(childInfo.hProcess);
+ 	CloseHandle(childInfo.hThread);
+ 
+-	mode = PIPE_NOWAIT;
+-	SetNamedPipeHandleState(childStdoutRd, &mode, NULL, NULL);
+-	*child_stdout = _open_osfhandle((intptr_t)childStdoutRd, _O_RDONLY);
+-	*child_stdin = _open_osfhandle((intptr_t)childStdinWr, _O_WRONLY);
++	*child_stdout = _open_osfhandle((intptr_t)childStdout[0], _O_RDONLY);
++	*child_stdin = _open_osfhandle((intptr_t)childStdin[1], _O_WRONLY);
++	
++	CloseHandle(childStdout[1]);
++	CloseHandle(childStdin[0]);
+ 
+ 	return (childInfo.dwProcessId);
+ 

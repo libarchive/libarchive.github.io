@@ -1,0 +1,64 @@
+Index: libarchive/archive_read_disk_posix.c
+===================================================================
+--- libarchive/archive_read_disk_posix.c        (revision 3374)
++++ libarchive/archive_read_disk_posix.c        (working copy)
+@@ -1386,7 +1386,7 @@
+        struct tree *t = a->tree;
+        struct statfs sfs;
+        struct statvfs svfs;
+-       int r, vr = 0, xr;
++       int r, vr = 0, xr = 0;
+ 
+        if (tree_current_is_symblic_link_target(t)) {
+ #if defined(HAVE_OPENAT) && defined(HAVE_FSTATAT) && defined(HAVE_FDOPENDIR)
+Index: libarchive/archive_write_set_format_iso9660.c
+===================================================================
+--- libarchive/archive_write_set_format_iso9660.c       (revision 3374)
++++ libarchive/archive_write_set_format_iso9660.c       (working copy)
+@@ -2225,6 +2225,8 @@
+                r = set_str_utf16be(a, bp+from, s, to - from + 1,
+                    0x0020, vdc);
+                break;
++       default:
++               r = ARCHIVE_FATAL;
+        }
+        return (r);
+ }
+@@ -2251,6 +2253,8 @@
+                r = set_str_utf16be(a, bp+from, s, to - from + 1,
+                    0x0020, vdc);
+                break;
++       default:
++               r = ARCHIVE_FATAL;
+        }
+        return (r);
+ }
+Index: libarchive/archive_write_set_format_shar.c
+===================================================================
+--- libarchive/archive_write_set_format_shar.c  (revision 3374)
++++ libarchive/archive_write_set_format_shar.c  (working copy)
+@@ -412,7 +412,7 @@
+ static int
+ _uuencode_line(struct archive_write *a, struct shar *shar, const char *inbuf, size_t len)
+ {
+-       char tmp_buf[3], *buf;
++       char *buf;
+        size_t alloc_len;
+ 
+        /* len <= 45 -> expanded to 60 + len byte + new line */
+@@ -431,13 +431,14 @@
+                buf += 4;
+        }
+        if (len != 0) {
++               char tmp_buf[3];
+                tmp_buf[0] = inbuf[0];
+                if (len == 1)
+                        tmp_buf[1] = '\0';
+                else
+                        tmp_buf[1] = inbuf[1];
+                tmp_buf[2] = '\0';
+-               uuencode_group(inbuf, buf);
++               uuencode_group(tmp_buf, buf);
+                buf += 4;
+        }
+        *buf++ = '\n';

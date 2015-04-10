@@ -1,0 +1,47 @@
+Index: build/cmake/config.h.in
+===================================================================
+--- build/cmake/config.h.in	(revision 1794)
++++ build/cmake/config.h.in	(working copy)
+@@ -690,6 +690,9 @@
+ /* Define to `long long' if <sys/types.h> does not define. */
+ #cmakedefine off_t ${off_t}
+ 
++/* Define to `int' if <sys/types.h> doesn't define. */
++#cmakedefine pid_t ${pid_t}
++
+ /* Define to `unsigned int' if <sys/types.h> does not define. */
+ #cmakedefine size_t ${size_t}
+ 
+Index: libarchive/archive_windows.h
+===================================================================
+--- libarchive/archive_windows.h	(revision 1794)
++++ libarchive/archive_windows.h	(working copy)
+@@ -302,8 +302,6 @@
+ #define __timeval _timeval64i32
+ #endif
+ 
+-typedef int pid_t;
+-
+ /* Message digest define */
+ #if !defined(HAVE_OPENSSL_MD5_H) && !defined(HAVE_OPENSSL_SHA_H)
+ # if defined(_MSC_VER) && _MSC_VER < 1300
+Index: CMakeLists.txt
+===================================================================
+--- CMakeLists.txt	(revision 1800)
++++ CMakeLists.txt	(working copy)
+@@ -580,6 +580,15 @@
+   ENDIF(WIN32)
+ ENDIF(NOT HAVE_UID_T)
+ #
++CHECK_TYPE_SIZE(pid_t       PID_T)
++IF(NOT HAVE_PID_T)
++  IF(WIN32)
++    SET(pid_t "int")
++  ELSE(WIN32)
++    MESSAGE(FATAL_ERROR "pid_t doesn't exist on this platform?")
++  ENDIF(WIN32)
++ENDIF(NOT HAVE_UID_T)
++#
+ CHECK_TYPE_SIZE(uint16_t    UINT16_T)
+ IF(NOT HAVE_UINT16_T)
+   SET(uint16_t "unsigned short")

@@ -1,0 +1,106 @@
+From be964fc4493249bc42d9876914ab8a183a8a96c3 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Diego=20Elio=20'Flameeyes'=20Petten=C3=B2?= <flameeyes@gmail.com>
+Date: Sun, 7 Mar 2010 19:01:19 +0100
+Subject: [PATCH] Create a custom macro to check for the various message digests.
+
+Instead of rewriting the same code in different ways, use a generic form of
+it, and write a macro to perform the tests.
+
+This also fixes the previously-broken support for extended SHA digests on
+non-*BSD systems (where OpenSSL has to be used), and should be extensible
+to use different library providers in the future.
+
+The usage of AC_CHECK_HEADERS_ONCE causes the OpenSSL headers to be checked
+unconditionally, but at the same time checks them at most once and with a
+faster codepath than the usual AC_CHECK_HEADERS, and should thus be
+preferred.
+---
+ configure.ac |   71 ++++++++++++++++++----------------------------------------
+ 1 files changed, 22 insertions(+), 49 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 51f27c3..2e5be0f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -261,56 +261,29 @@ if test "x$ac_cv_header_libxml_xmlreader_h" != "xyes"; then
+ fi
+ 
+ AC_CHECK_HEADERS([md5.h ripemd.h rmd160.h sha.h sha1.h sha2.h sha256.h])
+-# Common names for libc implementation on NetBSD and OpenBSD
+-AC_CHECK_FUNCS(MD5Init RMD160Init SHA1Init)
+-# SHA2 on NetBSD and older OpenBSD
+-AC_CHECK_FUNCS(SHA256_Init SHA384_Init SHA512_Init)
+-# SHA2 on newer OpenBSD
+-AC_CHECK_FUNCS(SHA256Init SHA384Init SHA512Init)
+-
+-if test "x$with_openssl" != "xno"; then
+-  if test "$ac_cv_func_MD5Init" != "yes"; then
+-    AC_CHECK_HEADERS([openssl/md5.h])
+-    AC_SEARCH_LIBS([MD5_Init], [crypto])
+-  fi
+-  if test "$ac_cv_func_RMD160Init" != "yes"; then
+-    AC_CHECK_HEADERS([openssl/ripemd.h])
+-    AC_SEARCH_LIBS([RIPEMD160_Init], [crypto])
+-  fi
+-  if test "$ac_cv_func_SHA1Init" != "yes"; then
+-    AC_CHECK_HEADERS([openssl/sha.h])
+-    AC_SEARCH_LIBS([SHA1_Init], [crypto])
+-  fi
+ 
+-  AC_CHECK_HEADERS([openssl/sha.h])
+-  if test "$ac_cv_func_SHA256Init" != "yes" &&
+-    test "$ac_cv_func_SHA256_Init" != "yes"; then
+-      AC_SEARCH_LIBS([SHA256_Init], [crypto])
+-      if test "$ac_cv_func_SHA256_Init" = "yes" &&
+-        test "$ac_cv_header_openssl_sha_h" = "yes"; then
+-        AC_DEFINE(HAVE_OPENSSL_SHA256_INIT, 1,
+-	  [Define to 1 if your openssl has the `SHA256_Init' function.])
+-      fi
+-  fi
+-  if test "$ac_cv_func_SHA384Init" != "yes" &&
+-    test "$ac_cv_func_SHA384_Init" != "yes"; then
+-      AC_SEARCH_LIBS([SHA384_Init], [crypto])
+-      if test "$ac_cv_func_SHA384_Init" = "yes" &&
+-        test "$ac_cv_header_openssl_sha_h" = "yes"; then
+-        AC_DEFINE(HAVE_OPENSSL_SHA384_INIT, 1,
+-	  [Define to 1 if your openssl has the `SHA384_Init' function.])
+-      fi
+-  fi
+-  if test "$ac_cv_func_SHA512Init" != "yes" &&
+-    test "$ac_cv_func_SHA512_Init" != "yes"; then
+-      AC_SEARCH_LIBS([SHA512_Init], [crypto])
+-      if test "$ac_cv_func_SHA512_Init" = "yes" &&
+-        test "$ac_cv_header_openssl_sha_h" = "yes"; then
+-        AC_DEFINE(HAVE_OPENSSL_SHA512_INIT, 1,
+-	  [Define to 1 if your openssl has the `SHA512_Init' function.])
+-      fi
+-  fi
+-fi
++AC_DEFUN([MD_CHECK_INIT], [
++  AC_CHECK_FUNCS([$1Init $1_Init], [$1_found=yes; break])
++  AS_IF([test "x$with_openssl" != "xno" -a "x$1_found" != "xyes"], [
++    AC_CHECK_HEADERS_ONCE([$2])
++    AS_IF([test "]AS_TR_SH([$ac_cv_header_$2])[" != "yes"], [
++      AC_CHECK_LIB([crypto], [$1_Init], [
++        LIBCRYPTO="-lcrypto"
++        AC_DEFINE(AS_TR_CPP([HAVE_OPENSSL_$1_INIT]), 1,
++	  [Define to 1 if your OpenSSL has the `$1_Init function.])
++      ])
++    ])
++  ])
++])
++
++LIBS="$LIBS $LIBCRYPTO"
++
++MD_CHECK_INIT([MD5], [openssl/md5.h])
++MD_CHECK_INIT([RMD160], [openssl/ripemd.h])
++MD_CHECK_INIT([SHA1], [openssl/sha.h])
++MD_CHECK_INIT([SHA256], [openssl/sha.h])
++MD_CHECK_INIT([SHA384], [openssl/sha.h])
++MD_CHECK_INIT([SHA512], [openssl/sha.h])
+ 
+ # TODO: Give the user the option of using a pre-existing system
+ # libarchive.  This will define HAVE_LIBARCHIVE which will cause
+-- 
+1.7.0
+

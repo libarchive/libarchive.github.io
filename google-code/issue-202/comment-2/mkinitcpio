@@ -1,0 +1,389 @@
+#!/bin/bash
+# mkinitcpio - modular tool for building an init ramfs cpio image
+#
+# IMPORTANT: We need to keep a common base syntax here because
+# some of these hooks/scripts need to run under busybox's ash -
+# therefore, the following constraints should be enforced:
+#   variables should be quoted and bracketed "${SOMEVAR}"
+#   inline execution should be done with $() instead of backticks
+#   use -z "${var}" to test for nulls/empty strings
+#   in case of embedded spaces, quote all path names and string comparisons
+#
+
+shopt -s extglob
+
+# Settings
+FUNCTIONS=/lib/initcpio/functions
+CONFIG=/etc/mkinitcpio.conf
+HOOKDIR=/lib/initcpio/hooks
+INSTDIR=/lib/initcpio/install
+PRESETDIR=/etc/mkinitcpio.d
+COMPRESSION=gzip
+
+declare BASEDIR= MODULE_FILE= GENIMG= PRESET= COMPRESSION_OPTIONS= BUILDROOT=
+declare NC= BOLD= BLUE= GREEN= RED= YELLOW=
+declare -i QUIET=1 SHOW_AUTOMODS=0 SAVELIST=0 COLOR=1
+declare -a SKIPHOOKS ADDED_MODULES MODPATHS
+
+# Add /{,usr}/sbin to path
+# works around undetected problems like in #8448
+PATH=$PATH:/sbin:/usr/sbin
+# Sanitize environment further
+# GREP_OPTIONS="--color=always" will break everything
+# CDPATH can affect cd and pushd
+unset GREP_OPTIONS CDPATH
+
+usage() {
+    cat <<EOF
+mkinitcpio 0.8.0
+usage: ${0##*/} [options]
+
+  Options:
+   -b BASEDIR       Use BASEDIR. default: /
+   -c CONFIG        Use CONFIG file. default: /etc/mkinitcpio.conf
+   -g IMAGE         Generate a cpio image as IMAGE. default: no
+   -H HOOKNAME      Output help for hook 'HOOKNAME'.
+   -h               Display this message.
+   -k KERNELVERSION Use KERNELVERSION. default: $(uname -r)
+   -L               List all available hooks.
+   -M               Display modules found via autodetection.
+   -n               Disable colorized output messages.
+   -p PRESET        Build specified preset from /etc/mkinitcpio.d
+   -S SKIPHOOKS     Skip SKIPHOOKS (comma-separated) when building the image.
+   -s               Save build directory. default: no
+   -t DIR           Use DIR as the temporary build directory.
+   -v               Verbose output. Default: no.
+   -z COMPRESS      Use COMPRESS on resulting image
+
+EOF
+    cleanup 1
+}
+
+cleanup() {
+    if [[ $workdir ]]; then
+        # when PRESET is set, we're in the main loop, not a worker process
+        if (( SAVELIST )) && [[ -z $PRESET ]]; then
+            msg "build directory saved in %s" "$workdir"
+        else
+            rm -rf "$workdir"
+        fi
+    fi
+
+    exit ${1:0}
+}
+
+get_kernver() {
+    local kernver= kernel=$1
+
+    if [[ -z $kernel ]]; then
+        uname -r
+        return 0
+    fi
+
+    if [[ ${kernel:0:1} != / ]]; then
+        echo "$kernel"
+        return 0
+    fi
+
+    if [[ ! -e $BASEDIR$kernel ]]; then
+        error "Specified kernel image does not exist: \`%s'" "$BASEDIR$kernel"
+        return 1
+    fi
+
+    read _ kernver < <(file -Lb "$BASEDIR$kernel" | grep -o 'version [^ ]\+')
+    if [[ $kernver && -e $BASEDIR/lib/modules/$kernver ]]; then
+        echo "$kernver"
+        return 0
+    fi
+
+    [[ ${optkver:0:1} == / ]] && optkver=$BASEDIR$optkver
+    error "invalid kernel specifier: \`%s'" "$optkver"
+
+    return 1
+}
+
+. "$FUNCTIONS"
+
+trap 'cleanup 130' INT
+trap 'cleanup 143' TERM
+
+while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
+    case "${arg}" in
+        c) CONFIG="${OPTARG}" ;;
+        k) optkver=$OPTARG ;;
+        s) SAVELIST=1; ;;
+        b) BASEDIR="${OPTARG}" ;;
+        g) GENIMG="${OPTARG}" ;;
+        h) usage ;;
+        p) PRESET="${OPTARG}" ;;
+        n) COLOR=0 ;;
+        v) QUIET=0 ;;
+        S) IFS=, read -r -a SKIPHOOKS <<< "$OPTARG" ;;
+        H) if [[ ! -r "${INSTDIR}/${OPTARG}" ]]; then
+               error "No hook ${OPTARG}"
+               exit 1
+           fi
+           . "${INSTDIR}/${OPTARG}"
+           if [[ $(type -t help) != function ]]; then
+               error "No help for hook ${OPTARG}"
+               exit 1
+           fi
+           msg "Help for hook '${OPTARG}':"
+           help
+           exit 0 ;;
+        L) msg "Available hooks"
+           cd "$INSTDIR" >/dev/null
+           printf '   %s\n' * | column -c$(tput cols)
+           exit 0 ;;
+        M) SHOW_AUTOMODS=1 ;;
+        t) TMPDIR=$OPTARG ;;
+        z) optcompress=$OPTARG ;;
+        :) error "option requires an argument -- '$OPTARG' (use -h for help)"
+           exit 1 ;;
+       \?) error "invalid option -- '$OPTARG' (use -h for help)"
+           exit 1 ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+if [[ -t 2 ]] && (( COLOR )); then
+    # prefer terminal safe colored and bold text when tput is supported
+    if tput setaf 0 &>/dev/null; then
+        NC="$(tput sgr0)"
+        BOLD="$(tput bold)"
+        BLUE="$BOLD$(tput setaf 4)"
+        GREEN="$BOLD$(tput setaf 2)"
+        RED="$BOLD$(tput setaf 1)"
+        YELLOW="$BOLD$(tput setaf 3)"
+    else
+        NC="\e[1;0m"
+        BOLD="\e[1;1m"
+        BLUE="$BOLD\e[1;34m"
+        GREEN="$BOLD\e[1;32m"
+        RED="$BOLD\e[1;31m"
+        YELLOW="$BOLD\e[1;33m"
+    fi
+fi
+readonly NC BOLD BLUE GREEN RED YELLOW
+
+# insist that /proc and /dev be mounted (important for chroots)
+# NOTE: avoid using mountpoint for this -- look for the paths that we actually
+# use in mkinitcpio. Avoids issues like FS#26344.
+[[ -e /proc/self/mountinfo ]] || die "/proc must be mounted!"
+[[ -e /dev/fd ]] || die "/dev must be mounted!"
+
+if [[ $BASEDIR ]]; then
+    # resolve the path. it might be a relative path and/or contain symlinks
+    if ! pushd "$BASEDIR" &>/dev/null; then
+        die "base directory does not exist or is not a directory: \`%s'" "$BASEDIR"
+    fi
+    BASEDIR=$(pwd -P)
+    BASEDIR=${BASEDIR%/}
+    popd &>/dev/null
+fi
+
+KERNELVERSION=$(get_kernver "$optkver") || cleanup 1
+
+if [[ $TMPDIR ]]; then
+    if [[ ! -d $TMPDIR ]]; then
+        error "Temporary directory does not exist or is not a directory: \`%s'" "$TMPDIR"
+        cleanup 1
+    fi
+    if [[ ! -w $TMPDIR ]]; then
+        error "Temporary directory is not writeable: \`%s'" "$TMPDIR"
+        cleanup 1
+    fi
+fi
+workdir=$(TMPDIR=$TMPDIR mktemp -d --tmpdir mkinitcpio.XXXXXX)
+BUILDROOT=$workdir/root
+
+# explicitly create the buildroot
+mkdir "$BUILDROOT"
+
+# use preset $PRESET
+if [[ $PRESET ]]; then
+    # allow absolute path to preset file, else resolve it
+    if [[ "${PRESET:0:1}" != '/' ]]; then
+        printf -v PRESET '%s/%s.preset' "$PRESETDIR" "$PRESET"
+    fi
+    if [[ -f "$PRESET" ]]; then
+        # Use -b, -m and -v options specified earlier
+        declare -a preset_mkopts preset_cmd
+        [[ $BASEDIR ]] && preset_mkopts+=(-b "$BASEDIR")
+        (( QUIET )) || preset_mkopts+=(-v)
+        # Build all images
+        . "$PRESET"
+        for p in "${PRESETS[@]}"; do
+            msg "Building image from preset: '$p'"
+            preset_cmd=("${preset_mkopts[@]}")
+
+            preset_kver=${p}_kver
+            if [[ ${!preset_kver:-$ALL_kver} ]]; then
+                preset_cmd+=(-k "${!preset_kver:-$ALL_kver}")
+            else
+                warning "No kernel version specified. Skipping image \`%s'" "$p"
+                continue
+            fi
+
+            preset_config=${p}_config
+            if [[ ${!preset_config:-$ALL_config} ]]; then
+              preset_cmd+=(-c "$BASEDIR${!preset_config:-$ALL_config}")
+            else
+                warning "No configuration file specified. Skipping image \`%s'" "$p"
+                continue
+            fi
+
+            preset_image=${p}_image
+            if [[ ${!preset_image} ]]; then
+                preset_cmd+=(-g "$BASEDIR${!preset_image}")
+            else
+                warning "No image file specified. Skipping image \`%s'" "$p"
+                continue
+            fi
+
+            preset_options=${p}_options
+            if [[ ${!preset_options} ]]; then
+                preset_cmd+=(${!preset_options}) # intentional word splitting
+            fi
+
+            msg2 "${preset_cmd[*]}"
+            "$0" "${preset_cmd[@]}"
+        done
+        cleanup 0
+    else
+        die "Preset not found: \`%s'" "$PRESET"
+    fi
+fi
+
+if [[ $GENIMG ]]; then
+    IMGPATH=$(readlink -f "$GENIMG")
+    if [[ -z $IMGPATH || ! -w ${IMGPATH%/*} ]]; then
+      die "Unable to write to path: \`%s'" "$GENIMG"
+    fi
+fi
+
+if [[ ! -f "$CONFIG" ]]; then
+    die "Config file does not exist: \`%s'" "$CONFIG"
+fi
+. "$CONFIG"
+
+MODULEDIR=$BASEDIR/lib/modules/$KERNELVERSION
+if [[ ! -d $MODULEDIR ]]; then
+    die "'$MODULEDIR' is not a valid kernel module directory"
+fi
+
+if (( SHOW_AUTOMODS )); then
+    msg "Modules autodetected"
+    . "${INSTDIR}/autodetect"
+    build
+    cat "${MODULE_FILE}"
+    cleanup 0
+fi
+
+
+if [[ -z $GENIMG ]]; then
+    msg "Starting dry run: %s" "$KERNELVERSION"
+else
+    COMPRESSION=${optcompress:-$COMPRESSION}
+    if ! type -P "$COMPRESSION" >/dev/null; then
+        die "Unable to locate compression method: %s" "$COMPRESSION"
+    fi
+
+    msg "Starting build: %s" "$KERNELVERSION"
+fi
+
+# set errtrace and a trap to catch errors in parse_hook
+declare -i builderrors=0
+set -E
+trap '[[ $FUNCNAME = parse_hook ]] && (( ++builderrors ))' ERR
+
+#parse 'global' hook, as defined in ${CONFIG}
+parse_hook
+
+for hook in ${HOOKS}; do
+    in_array "$hook" "${SKIPHOOKS[@]}" && continue
+    unset MODULES BINARIES FILES SCRIPT
+    build () { error "$hook: no build function..."; }
+
+    # A hook is considered deprecated if it is a symlink within $INSTDIR.
+    if [[ -L "$INSTDIR/$hook" ]]; then
+        newhook=$(readlink -e "$INSTDIR/$hook")
+        if [[ $newhook && "$INSTDIR/${newhook##*/}" -ef "$newhook" ]]; then
+            newhook=${newhook##*/}
+            warning "Hook '%s' is deprecated. Replace it with '%s' in your config" "$hook" "$newhook"
+            hook=$newhook
+        fi
+    fi
+    if [[ -r "${INSTDIR}/${hook}" ]]; then
+        . "${INSTDIR}/${hook}"
+        msg2 "Parsing hook: [%s]" "$hook"
+        if [[ $(type -t install) = 'function' ]]; then
+            warning "Hook '%s' uses a deprecated 'install' function. This should be renamed 'build'" "$hook"
+            install
+            unset install
+        else
+            build
+        fi
+        parse_hook
+    else
+        error "Hook '$hook' can not be found."
+        (( ++builderrors ))
+    fi
+done
+
+# unset errtrace and trap
+set +E
+trap ERR
+
+if (( ${#ADDED_MODULES[*]} )); then
+    mkdir -p "${MODPATHS[@]%/*}"
+
+    pushd "${BASEDIR:-/}" >/dev/null
+    cp --parents "${MODPATHS[@]/#$BASEDIR/.}" "$BUILDROOT"
+    popd >/dev/null
+
+    msg "Generating module dependencies"
+    /sbin/depmod -b "$BUILDROOT" "${KERNELVERSION}"
+    rm "$BUILDROOT/lib/modules/$KERNELVERSION"/modules.!(dep.bin|alias.bin|symbols.bin)
+fi
+
+declare -i status=0
+declare -a pipesave
+if [[ "${GENIMG}" ]]; then
+    msg "Creating $COMPRESSION initcpio image: %s" "$GENIMG"
+    [[ "$COMPRESSION" = xz ]] && COMPRESSION_OPTIONS+=" --check=crc32"
+
+    pushd "$BUILDROOT" >/dev/null
+    find . -print0 |
+        bsdcpio $( (( QUIET )) && echo '--quiet' ) -0oH newc |
+        $COMPRESSION $COMPRESSION_OPTIONS > "$IMGPATH"
+    pipesave=("${PIPESTATUS[@]}") # save immediately
+    popd >/dev/null
+
+    if (( pipesave[0] )); then
+        errmsg="find reported an error"
+    elif (( pipesave[1] )); then
+        errmsg="bsdcpio reported an error"
+    elif (( pipesave[2] )); then
+        errmsg="$COMPRESSION reported an error"
+    fi
+
+    if (( builderrors )); then
+        warning "errors were encountered during the build. The image may not be complete."
+        status=1
+    fi
+
+    if [[ $errmsg ]]; then
+        error "Image generation FAILED: %s" "$errmsg"
+        status=1
+    else
+        msg "Image generation successful"
+    fi
+
+else
+    msg "Dry run complete, use -g IMAGE to generate a real image"
+fi
+
+cleanup $status
+
+# vim: set ft=sh ts=4 sw=4 et:

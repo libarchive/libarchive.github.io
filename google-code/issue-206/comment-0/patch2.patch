@@ -1,0 +1,14 @@
+diff -urN --binary -x builds -x buildd libarchive-3.0.2.orig/libarchive/archive_write_disk_windows.c libarchive-3.0.2/libarchive/archive_write_disk_windows.c
+--- libarchive-3.0.2.orig/libarchive/archive_write_disk_windows.c	2011-12-24 18:56:28.000000000 +0100
++++ libarchive-3.0.2/libarchive/archive_write_disk_windows.c	2011-12-26 15:59:59.447181500 +0100
+@@ -542,6 +542,10 @@
+ {
+ 	static BOOLEAN (WINAPI *f)(LPWSTR, LPWSTR, LPSECURITY_ATTRIBUTES);
+ 	static int set;
++   if (!wcsncmp(linkname,L"\\\\?\\",4))
++      linkname += 4;
++   if (!wcsncmp(target,L"\\\\?\\",4))
++      target += 4;
+ 	if (!set) {
+ 		set = 1;
+ 		f = la_GetFunctionKernel32("CreateHardLinkW");

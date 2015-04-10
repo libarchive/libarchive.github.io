@@ -1,0 +1,92 @@
+# HG changeset patch
+# User Roman Neuhauser <neuhauser@sigpipe.cz>
+# Date 1299591678 -3600
+# Node ID 18aaaefb803c4954dc1c9a72bab93ee5459b5010
+# Parent  8200ac47ff3963886a60e51016fdc7b95154bb06
+(crashing) test for double close() after archive_read_open_filename
+
+uses stdin because i couldn't get the suite to copy my newly created
+file into the test's tmpdir; i observed the crash with stdin as well
+as both nonexistent and existent files.
+
+diff --git a/Makefile.am b/Makefile.am
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -250,6 +250,7 @@
+ 	libarchive/test/test_archive_api_feature.c		\
+ 	libarchive/test/test_archive_clear_error.c		\
+ 	libarchive/test/test_archive_read_close_twice.c		\
++	libarchive/test/test_archive_read_close_twice_open_filename.c	\
+ 	libarchive/test/test_archive_set_error.c		\
+ 	libarchive/test/test_archive_read_set_filter_option.c	\
+ 	libarchive/test/test_archive_read_set_format_option.c	\
+diff --git a/libarchive/test/CMakeLists.txt b/libarchive/test/CMakeLists.txt
+--- a/libarchive/test/CMakeLists.txt
++++ b/libarchive/test/CMakeLists.txt
+@@ -15,6 +15,7 @@
+     test_archive_api_feature.c
+     test_archive_clear_error.c
+     test_archive_read_close_twice.c
++    test_archive_read_close_twice_open_filename.c
+     test_archive_set_error.c
+     test_archive_read_set_filter_option.c
+     test_archive_read_set_format_option.c
+diff --git a/libarchive/test/test_archive_read_close_twice_open_filename.c b/libarchive/test/test_archive_read_close_twice_open_filename.c
+new file mode 100644
+--- /dev/null
++++ b/libarchive/test/test_archive_read_close_twice_open_filename.c
+@@ -0,0 +1,54 @@
++/*-
++ * Copyright (c) 2011 Tim Kientzle
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++ * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "test.h"
++__FBSDID("$FreeBSD$");
++
++#ifdef HAVE_UNISTD_H
++#include <unistd.h>
++#endif
++#ifdef HAVE_SYS_PARAM_H
++#include <sys/param.h>
++#endif
++
++#define test(__a) \
++assertEqualInt(0, archive_errno(a)); \
++assertEqualString(NULL, archive_error_string(a));
++
++DEFINE_TEST(test_archive_read_close_twice_open_filename)
++{
++	struct archive* a = archive_read_new();
++
++	assertEqualInt(0, archive_read_open_filename(a, NULL, 0));
++	test(a);
++
++	assertEqualInt(0, archive_read_close(a));
++	test(a);
++
++	assertEqualInt(0, archive_read_close(a));
++	test(a);
++
++	archive_read_finish(a);
++}

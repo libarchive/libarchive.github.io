@@ -1,0 +1,85 @@
+# HG changeset patch
+# User Roman Neuhauser <neuhauser@sigpipe.cz>
+# Date 1299836852 -3600
+# Node ID 16742c5d3818244fc1ac26365b4dc9a7cdb49925
+# Parent  d43561518e45ef37579ef921f056831ee5348d25
+test for archive_read_next_header with tar format and emtpy file
+
+diff --git a/Makefile.am b/Makefile.am
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -253,6 +253,7 @@
+ 	libarchive/test/test_archive_read_close_twice_open_fd.c	\
+ 	libarchive/test/test_archive_read_close_twice_open_filename.c	\
+ 	libarchive/test/test_archive_read_next_header_empty_raw.c	\
++	libarchive/test/test_archive_read_next_header_empty_tar.c	\
+ 	libarchive/test/test_archive_read_set_filter_option.c	\
+ 	libarchive/test/test_archive_read_set_format_option.c	\
+ 	libarchive/test/test_archive_read_set_option.c		\
+diff --git a/libarchive/test/CMakeLists.txt b/libarchive/test/CMakeLists.txt
+--- a/libarchive/test/CMakeLists.txt
++++ b/libarchive/test/CMakeLists.txt
+@@ -18,6 +18,7 @@
+     test_archive_read_close_twice_open_fd.c
+     test_archive_read_close_twice_open_filename.c
+     test_archive_read_next_header_empty_raw.c
++    test_archive_read_next_header_empty_tar.c
+     test_archive_read_set_filter_option.c
+     test_archive_read_set_format_option.c
+     test_archive_read_set_option.c
+diff --git a/libarchive/test/test_archive_read_next_header_empty_raw.c b/libarchive/test/test_archive_read_next_header_empty_tar.c
+copy from libarchive/test/test_archive_read_next_header_empty_raw.c
+copy to libarchive/test/test_archive_read_next_header_empty_tar.c
+--- a/libarchive/test/test_archive_read_next_header_empty_raw.c
++++ b/libarchive/test/test_archive_read_next_header_empty_tar.c
+@@ -34,16 +34,16 @@
+ 
+ #define assertOK(__expr) assertEqualInt(ARCHIVE_OK, __expr)
+ 
+-#define REFFILE "test_archive_read_next_header_empty_raw"
++#define REFFILE "test_archive_read_next_header_empty_tar"
+ 
+-DEFINE_TEST(test_archive_read_next_header_empty_raw)
++DEFINE_TEST(test_archive_read_next_header_empty_tar)
+ {
+ 	struct archive* a = archive_read_new();
+ 	struct archive_entry* e;
+ 
+ 	extract_reference_file(REFFILE);
+ 
+-	assertOK(archive_read_support_format_raw(a));
++	assertOK(archive_read_support_format_tar(a));
+ 	assertNoError(a);
+ 
+ 	assertOK(archive_read_open_filename(a, REFFILE, 0));
+diff --git a/libarchive/test/test_archive_read_next_header_empty_tar.uu b/libarchive/test/test_archive_read_next_header_empty_tar.uu
+new file mode 100644
+--- /dev/null
++++ b/libarchive/test/test_archive_read_next_header_empty_tar.uu
+@@ -0,0 +1,26 @@
++begin 644 libarchive/test/test_archive_read_next_header_empty_tar
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++M````````````````````````````````````````````````````````````
++B````````````````````````````````````````````````
++`
++end

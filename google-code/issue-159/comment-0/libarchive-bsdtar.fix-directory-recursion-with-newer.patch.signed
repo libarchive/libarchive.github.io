@@ -1,0 +1,36 @@
+Descend directories even if not adding the parent directory due to timestamp.
+
+I am authorized to contribute this upstream,
+ please contact me at mjevans1983@gmail.com if there
+ are any questions related to this contribution.
+
+diff --git a/tar/write.c b/tar/write.c
+index f13bc78..b7b86be 100644
+--- a/tar/write.c
++++ b/tar/write.c
+@@ -783,8 +783,24 @@ write_hierarchy(struct bsdtar *bsdtar, struct archive *a, const char *path)
+ 		 * In -u mode, check that the file is newer than what's
+ 		 * already in the archive; in all modes, obey --newerXXX flags.
+ 		 */
+-		if (!new_enough(bsdtar, name, st))
++		if (!new_enough(bsdtar, name, st)) {
++			/* Copy from beneath; must check children also. */
++			/*
++			* If the user vetoes this file/directory, skip it.
++			* We want this to be fairly late; if some other
++			* check would veto this file, we shouldn't bother
++			* the user with it.
++			*/
++			if (bsdtar->option_interactive &&
++			    !yes("add '%s'", name))
++				continue;
++
++			/* Note: if user vetoes, we won't descend. */
++			if (descend && !bsdtar->option_no_subdirs)
++				tree_descend(tree);
++
+ 			continue;
++		}
+ 
+ 		archive_entry_free(entry);
+ 		entry = archive_entry_new();

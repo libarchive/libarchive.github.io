@@ -1,0 +1,36 @@
+From fdc8c53a22773df835d5096a679d92bfa34d5731 Mon Sep 17 00:00:00 2001
+From: Jtalk <me@jtalk.me>
+Date: Sun, 4 May 2014 15:40:39 +0600
+Subject: [PATCH] Heap buffer overflow fixup for rar archive reader.
+
+---
+ libarchive/archive_read_support_format_rar.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/libarchive/archive_read_support_format_rar.c b/libarchive/archive_read_support_format_rar.c
+index ae302a6..44d1bff 100644
+--- a/libarchive/archive_read_support_format_rar.c
++++ b/libarchive/archive_read_support_format_rar.c
+@@ -1529,8 +1529,8 @@ read_header(struct archive_read *a, struct archive_entry *entry,
+   }
+ 
+   /* Split file in multivolume RAR. No more need to process header. */
+-  if (rar->filename_save &&
+-    !memcmp(rar->filename, rar->filename_save, filename_size + 1))
++  if (rar->filename_save && 
++    !strcmp(rar->filename, rar->filename_save))
+   {
+     __archive_read_consume(a, header_size - 7);
+     rar->cursor++;
+@@ -1558,7 +1558,7 @@ read_header(struct archive_read *a, struct archive_entry *entry,
+ 
+   rar->filename_save = (char*)realloc(rar->filename_save,
+                                       filename_size + 1);
+-  memcpy(rar->filename_save, rar->filename, filename_size + 1);
++  strcpy(rar->filename_save, rar->filename);
+ 
+   /* Set info for seeking */
+   free(rar->dbo);
+-- 
+1.8.3.2
+

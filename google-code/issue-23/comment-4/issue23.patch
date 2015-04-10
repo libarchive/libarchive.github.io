@@ -1,0 +1,60 @@
+Index: libarchive/archive_windows.c
+===================================================================
+--- libarchive/archive_windows.c	(revision 1020)
++++ libarchive/archive_windows.c	(working copy)
+@@ -1061,7 +1061,7 @@
+ 		errno = EBADF;
+ 		return (-1);
+ 	}
+-	if (!WriteFile((HANDLE)_get_osfhandle(fd), buf, (uint32_t)nbytes,
++	if (!WriteFile((HANDLE)_get_osfhandle(fd), buf, (DWORD)nbytes,
+ 	    &bytes_written, NULL)) {
+ 		DWORD lasterr;
+ 
+@@ -1108,7 +1108,7 @@
+ 	if (!ctx->valid)
+ 	return;
+ 
+-	CryptHashData(ctx->hash, buf, (DWORD)len, 0);
++	CryptHashData(ctx->hash, (BYTE *)(uintptr_t)buf, (DWORD)len, 0);
+ }
+ 
+ static void
+Index: libarchive/archive_windows.h
+===================================================================
+--- libarchive/archive_windows.h	(revision 1020)
++++ libarchive/archive_windows.h	(working copy)
+@@ -42,6 +42,7 @@
+ #include <process.h>
+ #include <direct.h>
+ #include <windows.h>
++#include <Wincrypt.h>
+ //#define	EFTYPE 7
+ 
+ #if !defined(STDIN_FILENO)
+@@ -86,7 +87,9 @@
+ #define	chmod		la_chmod
+ #define	close		_close
+ #define	fcntl		la_fcntl
++#ifndef fileno
+ #define	fileno		_fileno
++#endif
+ #define	fstat		la_fstat
+ #define	getcwd		_getcwd
+ #define	lseek		la_lseek
+Index: libarchive/archive_write_set_format_cpio.c
+===================================================================
+--- libarchive/archive_write_set_format_cpio.c	(revision 1020)
++++ libarchive/archive_write_set_format_cpio.c	(working copy)
+@@ -125,8 +125,9 @@
+ 	 * re-using the ones off the disk.  That way, the 18-bit c_ino
+ 	 * field only limits the number of files in the archive.
+ 	 */
+-	if (archive_entry_ino(entry) > 0777777) {
+-		archive_set_error(&a->archive, ERANGE, "large inode number truncated");
++	if ((int)archive_entry_ino(entry) > 0777777) {
++		archive_set_error(&a->archive, ERANGE,
++		    "large inode number truncated");
+ 		ret = ARCHIVE_WARN;
+ 	}
+ 

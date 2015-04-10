@@ -1,0 +1,21 @@
+# HG changeset patch
+# User Roman Neuhauser <neuhauser@sigpipe.cz>
+# Date 1299595927 -3600
+# Node ID 4a304961d9b26f74a42157549ff9365151dd0a1c
+# Parent  bc8c9d787e8e7ab5b9d87b360edb5eaba728181b
+fix segfault in second close() after archive_read_open_*
+
+crash observed with archive_read_open_fd, archive_read_open_filename
+
+diff --git a/libarchive/archive_read.c b/libarchive/archive_read.c
+--- a/libarchive/archive_read.c
++++ b/libarchive/archive_read.c
+@@ -190,7 +190,7 @@
+ {
+ 	int r = ARCHIVE_OK;
+ 
+-	if (self->archive->client.closer != NULL)
++	if (self->archive->client.closer != NULL && self->data != NULL)
+ 		r = (self->archive->client.closer)((struct archive *)self->archive,
+ 		    self->data);
+ 	self->data = NULL;

@@ -1,0 +1,137 @@
+Index: tar/CMakeLists.txt
+===================================================================
+--- tar/CMakeLists.txt	(revision 1647)
++++ tar/CMakeLists.txt	(working copy)
+@@ -46,7 +46,7 @@
+   # On Windows, DLL must end up in same dir with EXEs
+   IF(WIN32 AND NOT CYGWIN)
+     SET_TARGET_PROPERTIES(bsdtar PROPERTIES
+-      RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
++      RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..)
+   ENDIF(WIN32 AND NOT CYGWIN)
+   GET_TARGET_PROPERTY(BSDTAR bsdtar LOCATION)
+ 
+Index: cpio/CMakeLists.txt
+===================================================================
+--- cpio/CMakeLists.txt	(revision 1647)
++++ cpio/CMakeLists.txt	(working copy)
+@@ -39,7 +39,7 @@
+   # On Windows, DLL must end up in same dir with EXEs
+   IF(WIN32 AND NOT CYGWIN)
+     SET_TARGET_PROPERTIES(bsdcpio PROPERTIES
+-      RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
++      RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..)
+   ENDIF(WIN32 AND NOT CYGWIN)
+   # Full path to the compiled executable (used by test suite)
+   GET_TARGET_PROPERTY(BSDCPIO bsdcpio LOCATION)
+Index: build/cmake/CheckHeaderSTDC.cmake
+===================================================================
+--- build/cmake/CheckHeaderSTDC.cmake	(revision 1647)
++++ build/cmake/CheckHeaderSTDC.cmake	(working copy)
+@@ -26,8 +26,8 @@
+     MESSAGE(STATUS "Cheking for ANSI C header files")
+     TRY_RUN(CHECK_HEADER_STDC_result
+       CHECK_HEADER_STDC_compile_result
+-      ${CMAKE_BINARY_DIR}
+-      ${CMAKE_SOURCE_DIR}/build/cmake/CheckHeaderSTDC.c
++      ${CMAKE_CURRENT_BINARY_DIR}
++      ${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/CheckHeaderSTDC.c
+       COMPILE_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS}
+       CMAKE_FLAGS
+       -DCOMPILE_DEFINITIONS:STRING=${MACRO_CHECK_HEADER_STDC_FLAGS}
+@@ -47,14 +47,14 @@
+     IF(CHECK_HEADER_STDC_result)
+       MESSAGE(STATUS "Cheking for ANSI C header files - found")
+       SET(STDC_HEADERS 1 CACHE INTERNAL "Have ANSI C headers")
+-      FILE(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
++      FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
+         "Determining if the include file ${INCLUDE} "
+         "exists passed with the following output:\n"
+         "${OUTPUT}\n\n")
+     ELSE(CHECK_HEADER_STDC_result)
+       MESSAGE(STATUS "Cheking for ANSI C header files - not found")
+       SET(STDC_HEADERS "" CACHE INTERNAL "Have ANSI C headers")
+-      FILE(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
++      FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
+         "Determining if the include file ${INCLUDE} "
+         "exists failed with the following output:\n"
+         "${OUTPUT}\n\n")
+Index: build/cmake/CheckFileOffsetBits.cmake
+===================================================================
+--- build/cmake/CheckFileOffsetBits.cmake	(revision 1647)
++++ build/cmake/CheckFileOffsetBits.cmake	(working copy)
+@@ -20,13 +20,13 @@
+   IF(NOT DEFINED _FILE_OFFSET_BITS)
+     MESSAGE(STATUS "Cheking _FILE_OFFSET_BITS for large files")
+     TRY_COMPILE(__WITHOUT_FILE_OFFSET_BITS_64
+-      ${CMAKE_BINARY_DIR}
+-      ${CMAKE_SOURCE_DIR}/build/cmake/CheckFileOffsetBits.c
++      ${CMAKE_CURRENT_BINARY_DIR}
++      ${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/CheckFileOffsetBits.c
+       COMPILE_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS})
+     IF(NOT __WITHOUT_FILE_OFFSET_BITS_64)
+       TRY_COMPILE(__WITH_FILE_OFFSET_BITS_64
+-        ${CMAKE_BINARY_DIR}
+-        ${CMAKE_SOURCE_DIR}/build/cmake/CheckFileOffsetBits.c
++        ${CMAKE_CURRENT_BINARY_DIR}
++        ${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/CheckFileOffsetBits.c
+         COMPILE_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS} -D_FILE_OFFSET_BITS=64)
+     ENDIF(NOT __WITHOUT_FILE_OFFSET_BITS_64)
+ 
+Index: build/cmake/CheckFuncs.cmake
+===================================================================
+--- build/cmake/CheckFuncs.cmake	(revision 1647)
++++ build/cmake/CheckFuncs.cmake	(working copy)
+@@ -29,10 +29,10 @@
+      SET(CHECK_STUB_FUNC_1 "__stub_${_FUNC}")
+      SET(CHECK_STUB_FUNC_2 "__stub___${_FUNC}")
+      CONFIGURE_FILE( ${libarchive_SOURCE_DIR}/build/cmake/CheckFuncs_stub.c.in
+-       ${CMAKE_BINARY_DIR}/cmake.tmp/CheckFuncs_stub.c IMMEDIATE)
++       ${CMAKE_CURRENT_BINARY_DIR}/cmake.tmp/CheckFuncs_stub.c IMMEDIATE)
+      TRY_COMPILE(__stub
+-       ${CMAKE_BINARY_DIR}
+-       ${CMAKE_BINARY_DIR}/cmake.tmp/CheckFuncs_stub.c
++       ${CMAKE_CURRENT_BINARY_DIR}
++       ${CMAKE_CURRENT_BINARY_DIR}/cmake.tmp/CheckFuncs_stub.c
+        COMPILE_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS}
+        CMAKE_FLAGS
+        -DCOMPILE_DEFINITIONS:STRING=${MACRO_CHECK_INCLUDE_FILE_FLAGS}
+Index: libarchive/CMakeLists.txt
+===================================================================
+--- libarchive/CMakeLists.txt	(revision 1647)
++++ libarchive/CMakeLists.txt	(working copy)
+@@ -116,14 +116,14 @@
+ TARGET_LINK_LIBRARIES(archive ${ADDITIONAL_LIBS})
+ SET_TARGET_PROPERTIES(archive PROPERTIES SOVERSION ${SOVERSION})
+ SET_TARGET_PROPERTIES(archive PROPERTIES
+-  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
++  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..)
+ 
+ # archive_static is a static library
+ ADD_LIBRARY(archive_static STATIC ${libarchive_SOURCES} ${include_HEADERS})
+ SET_TARGET_PROPERTIES(archive_static PROPERTIES COMPILE_DEFINITIONS
+   LIBARCHIVE_STATIC)
+ SET_TARGET_PROPERTIES(archive_static PROPERTIES
+-  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
++  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..)
+ # On Posix systems, libarchive.so and libarchive.a can co-exist.
+ IF(NOT WIN32 OR CYGWIN)
+   SET_TARGET_PROPERTIES(archive_static PROPERTIES OUTPUT_NAME archive)
+Index: CMakeLists.txt
+===================================================================
+--- CMakeLists.txt	(revision 1647)
++++ CMakeLists.txt	(working copy)
+@@ -3,11 +3,11 @@
+ PROJECT(libarchive C)
+ #
+ CMAKE_MINIMUM_REQUIRED(VERSION 2.6.1)
+-SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/build/cmake")
++SET(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake")
+ #
+ # Version - read from 'version' file.
+ #
+-FILE(STRINGS ${CMAKE_SOURCE_DIR}/build/version _version)
++FILE(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/build/version _version)
+ STRING(REGEX REPLACE
+  "^([0-9])[0-9][0-9][0-9][0-9][0-9][0-9][a-z]?$" "\\1" _major ${_version})
+ STRING(REGEX REPLACE

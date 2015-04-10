@@ -1,0 +1,40 @@
+--- a/libarchive/archive_write_disk.c
++++ b/libarchive/archive_write_disk.c
+@@ -300,6 +300,7 @@
+ 		av.archive_write_finish_entry = _archive_write_finish_entry;
+ 		av.archive_write_data = _archive_write_data;
+ 		av.archive_write_data_block = _archive_write_data_block;
++		inited = 1;
+ 	}
+ 	return (&av);
+ }
+--- a/libarchive/archive_write.c
++++ b/libarchive/archive_write.c
+@@ -77,6 +77,7 @@
+ 		av.archive_write_header = _archive_write_header;
+ 		av.archive_write_finish_entry = _archive_write_finish_entry;
+ 		av.archive_write_data = _archive_write_data;
++		inited = 1;
+ 	}
+ 	return (&av);
+ }
+--- a/libarchive/archive_read.c
++++ b/libarchive/archive_read.c
+@@ -71,6 +71,7 @@
+ 	if (!inited) {
+ 		av.archive_finish = _archive_read_finish;
+ 		av.archive_close = _archive_read_close;
++		inited = 1;
+ 	}
+ 	return (&av);
+ }
+--- a/libarchive/archive_read_disk.c
++++ b/libarchive/archive_read_disk.c
+@@ -47,6 +47,7 @@
+ 	if (!inited) {
+ 		av.archive_finish = _archive_read_finish;
+ 		av.archive_close = _archive_read_close;
++		inited = 1;
+ 	}
+ 	return (&av);
+ }

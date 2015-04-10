@@ -1,0 +1,23 @@
+==16200== Invalid read of size 8
+==16200==    at 0x4C2ECB0: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==16200==    by 0x41AEAD: __archive_read_ahead (in /mnt/ram/libarchive/c/bin/bsdcpio)
+==16200==    by 0x42FDE7: header_bin_le (in /mnt/ram/libarchive/c/bin/bsdcpio)
+==16200==    by 0x430530: archive_read_format_cpio_read_header (in /mnt/ram/libarchive/c/bin/bsdcpio)
+==16200==    by 0x418B98: _archive_read_next_header (in /mnt/ram/libarchive/c/bin/bsdcpio)
+==16200==    by 0x40DFAE: main (in /mnt/ram/libarchive/c/bin/bsdcpio)
+==16200==  Address 0xffffffff8954c260 is not stack'd, malloc'd or (recently) free'd
+==16200== 
+==16200== 
+==16200== Process terminating with default action of signal 11 (SIGSEGV)
+==16200==  Access not within mapped region at address 0xFFFFFFFF8954C260
+==16200==    at 0x4C2ECB0: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==16200==    by 0x41AEAD: __archive_read_ahead (in /mnt/ram/libarchive/c/bin/bsdcpio)
+==16200==    by 0x42FDE7: header_bin_le (in /mnt/ram/libarchive/c/bin/bsdcpio)
+==16200==    by 0x430530: archive_read_format_cpio_read_header (in /mnt/ram/libarchive/c/bin/bsdcpio)
+==16200==    by 0x418B98: _archive_read_next_header (in /mnt/ram/libarchive/c/bin/bsdcpio)
+==16200==    by 0x40DFAE: main (in /mnt/ram/libarchive/c/bin/bsdcpio)
+==16200==  If you believe this happened as a result of a stack
+==16200==  overflow in your program's main thread (unlikely but
+==16200==  possible), you can try to increase the size of the
+==16200==  main thread stack using the --main-stacksize= flag.
+==16200==  The main thread stack size used in this run was 8388608.

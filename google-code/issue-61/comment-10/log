@@ -1,0 +1,293 @@
+make  check-am
+make  libarchive_test bsdtar_test  bsdcpio_test
+`libarchive_test' is up to date.
+`bsdtar_test' is up to date.
+`bsdcpio_test' is up to date.
+make  check-TESTS
+
+If tests fail or crash, details will be in:
+   /tmp/libarchive_test.2010-01-28T10.23.29-000
+
+Reference files will be read from: /export/home/cue/proj/libarchive-2.7.902a/libarchive/test
+Exercising: libarchive 2.7.902a
+  0: test_acl_basic                                    ok
+  1: test_acl_freebsd                                  ok
+  2: test_acl_pax                                      ok
+  3: test_archive_api_feature                          ok
+  4: test_bad_fd                                       ok
+  5: test_compat_bzip2                                 ok
+  6: test_compat_cpio                                  ok
+  7: test_compat_gtar                                  ok
+  8: test_compat_gzip                                  ok
+  9: test_compat_lzma                                  ok
+ 10: test_compat_solaris_tar_acl                       ok
+ 11: test_compat_tar_hardlink                          ok
+ 12: test_compat_xz                                    ok
+ 13: test_compat_zip                                   ok
+ 14: test_empty_write                                  ok
+ 15: test_entry                                        ok
+ 16: test_entry_strmode                                ok
+ 17: test_extattr_freebsd                              ok
+ 18: test_fuzz                                         ok
+ 19: test_link_resolver                                ok
+ 20: test_open_fd                                      ok
+ 21: test_open_file                                    ok
+ 22: test_open_filename                                ok
+ 23: test_pax_filename_encoding                        ok
+ 24: test_read_compress_program                        ok
+ 25: test_read_data_large                              ok
+ 26: test_read_disk                                    ok
+ 27: test_read_disk_entry_from_file                    ok
+ 28: test_read_extract                                 ok
+ 29: test_read_file_nonexistent                        ok
+ 30: test_read_format_ar                               ok
+ 31: test_read_format_cpio_bin                         ok
+ 32: test_read_format_cpio_bin_Z                       ok
+ 33: test_read_format_cpio_bin_be                      ok
+ 34: test_read_format_cpio_bin_bz2                     ok
+ 35: test_read_format_cpio_bin_gz                      ok
+ 36: test_read_format_cpio_bin_lzma                    ok
+ 37: test_read_format_cpio_bin_xz                      ok
+ 38: test_read_format_cpio_odc                         ok
+ 39: test_read_format_cpio_svr4_bzip2_rpm              ok
+ 40: test_read_format_cpio_svr4_gzip                   ok
+ 41: test_read_format_cpio_svr4_gzip_rpm               ok
+ 42: test_read_format_cpio_svr4c_Z                     ok
+ 43: test_read_format_empty                            ok
+ 44: test_read_format_gtar_gz                          ok
+ 45: test_read_format_gtar_lzma                        ok
+ 46: test_read_format_gtar_sparse                      ok
+ 47: test_read_format_iso_gz                           ok
+ 48: test_read_format_iso_multi_extent                 ok
+ 49: test_read_format_isojoliet_bz2                    ok
+ 50: test_read_format_isojoliet_long                   ok
+ 51: test_read_format_isojoliet_rr                     ok
+ 52: test_read_format_isorr_bz2                        ok
+ 53: test_read_format_isorr_ce                         ok
+ 54: test_read_format_isorr_new_bz2                    ok
+ 55: test_read_format_isorr_rr_moved                   ok
+ 56: test_read_format_isozisofs_bz2                    ok
+ 57: test_read_format_mtree                            ok
+ 58: test_read_format_pax_bz2                          ok
+ 59: test_read_format_raw                              ok
+ 60: test_read_format_tar                              ok
+ 61: test_read_format_tar_empty_filename               ok
+ 62: test_read_format_tbz                              ok
+ 63: test_read_format_tgz                              ok
+ 64: test_read_format_tlz                              ok
+ 65: test_read_format_txz                              ok
+ 66: test_read_format_tz                               ok
+ 67: test_read_format_xar                              FAIL
+ 68: test_read_format_zip                              ok
+ 69: test_read_large                                   ok
+ 70: test_read_pax_truncated                           ok
+ 71: test_read_position                                ok
+ 72: test_read_truncated                               ok
+ 73: test_read_uu                                      ok
+ 74: test_tar_filenames                                ok
+ 75: test_tar_large                                    ok
+ 76: test_ustar_filenames                              ok
+ 77: test_write_compress                               ok
+ 78: test_write_compress_bzip2                         ok
+ 79: test_write_compress_gzip                          ok
+ 80: test_write_compress_lzma                          ok
+ 81: test_write_compress_program                       ok
+ 82: test_write_compress_xz                            ok
+ 83: test_write_disk                                   ok
+ 84: test_write_disk_failures                          ok
+ 85: test_write_disk_hardlink                          ok
+ 86: test_write_disk_perms                             ok
+ 87: test_write_disk_secure                            ok
+ 88: test_write_disk_sparse                            ok
+ 89: test_write_disk_symlink                           ok
+ 90: test_write_disk_times                             ok
+ 91: test_write_format_ar                              ok
+ 92: test_write_format_cpio                            ok
+ 93: test_write_format_cpio_empty                      ok
+ 94: test_write_format_cpio_newc                       ok
+ 95: test_write_format_cpio_odc                        ok
+ 96: test_write_format_mtree                           ok
+ 97: test_write_format_pax                             ok
+ 98: test_write_format_shar_empty                      ok
+ 99: test_write_format_tar                             ok
+100: test_write_format_tar_empty                       ok
+101: test_write_format_tar_ustar                       ok
+102: test_write_format_zip                             ok
+103: test_write_format_zip_empty                       ok
+104: test_write_format_zip_no_compression              ok
+105: test_write_open_memory                            ok
+
+Totals:
+  Tests run:              106
+  Tests failed:             1
+  Assertions checked: 2820534
+  Assertions failed:       12
+  Skips reported:          15
+
+Failing tests:
+  67: test_read_format_xar (12 failures)
+
+Details for failing tests: /tmp/libarchive_test.2010-01-28T10.23.29-000
+
+FAIL: libarchive_test
+
+If tests fail or crash, details will be in:
+   /tmp/bsdtar_test.2010-01-28T10.23.37-000
+
+Reference files will be read from: /export/home/cue/proj/libarchive-2.7.902a/tar/test
+Running tests on: "/export/home/cue/proj/libarchive-2.7.902a/bsdtar"
+Exercising: bsdtar 2.7.902a - libarchive 2.7.902a
+
+  0: test_0                                            ok
+  1: test_basic                                        ok
+  2: test_copy                                         ok
+  3: test_empty_mtree                                  ok
+  4: test_getdate                                      ok
+  5: test_help                                         ok
+  6: test_option_T_upper                               ok
+  7: test_option_q                                     ok
+  8: test_option_r                                     ok
+  9: test_option_s                                     ok
+ 10: test_patterns                                     ok
+ 11: test_stdio                                        ok
+ 12: test_strip_components                             ok
+ 13: test_symlink_dir                                  ok
+ 14: test_version                                      ok
+ 15: test_windows                                      ok
+
+Totals:
+  Tests run:               16
+  Tests failed:             0
+  Assertions checked:    6685
+  Assertions failed:        0
+  Skips reported:           1
+16 tests passed, no failures
+PASS: bsdtar_test
+
+If tests fail or crash, details will be in:
+   /tmp/bsdcpio_test.2010-01-28T10.23.40-000
+
+Reference files will be read from: /export/home/cue/proj/libarchive-2.7.902a/cpio/test
+Running tests on: "/export/home/cue/proj/libarchive-2.7.902a/bsdcpio"
+Exercising: bsdcpio 2.7.902a -- libarchive 2.7.902a
+
+  0: test_0                                            ok
+  1: test_basic                                        ok
+  2: test_cmdline                                      ok
+  3: test_format_newc                                  ok
+  4: test_gcpio_compat                                 ok
+  5: test_option_B_upper                               ok
+  6: test_option_C_upper                               ok
+  7: test_option_J_upper                               ok
+  8: test_option_L_upper                               ok
+  9: test_option_Z_upper                               ok
+ 10: test_option_a                                     ok
+ 11: test_option_c                                     ok
+ 12: test_option_d                                     ok
+ 13: test_option_f                                     ok
+ 14: test_option_help                                  ok
+ 15: test_option_l                                     ok
+ 16: test_option_lzma                                  ok
+ 17: test_option_m                                     ok
+ 18: test_option_t                                     ok
+ 19: test_option_u                                     ok
+ 20: test_option_version                               ok
+ 21: test_option_y                                     ok
+ 22: test_option_z                                     ok
+ 23: test_owner_parse                                  ok
+ 24: test_passthrough_dotdot                           ok
+ 25: test_passthrough_reverse                          ok
+ 26: test_pathmatch                                    ok
+
+Totals:
+  Tests run:               27
+  Tests failed:             0
+  Assertions checked:     895
+  Assertions failed:        0
+  Skips reported:           2
+27 tests passed, no failures
+PASS: bsdcpio_test
+=====================================
+1 of 3 tests failed
+Please report to kientzle@freebsd.org
+=====================================
+*** Error code 1
+The following command caused the error:
+failed=0; all=0; xfail=0; xpass=0; skip=0; ws='[	 ]'; \
+srcdir=.; export srcdir; \
+list=' libarchive_test bsdtar_test bsdcpio_test '; \
+if test -n "$list"; then \
+  for tst in $list; do \
+    if test -f ./$tst; then dir=./; \
+    elif test -f $tst; then dir=; \
+    else dir="./"; fi; \
+    if LIBARCHIVE_TEST_FILES=`cd .;/bin/pwd`/libarchive/test BSDTAR=`cd .;/bin/pwd`/bsdtar BSDTAR_TEST_FILES=`cd .;/bin/pwd`/tar/test BSDCPIO=`cd .;/bin/pwd`/bsdcpio BSDCPIO_TEST_FILES=`cd .;/bin/pwd`/cpio/test ${dir}$tst; then \
+      all=`expr $all + 1`; \
+      case "  " in \
+      *$ws$tst$ws*) \
+	xpass=`expr $xpass + 1`; \
+	failed=`expr $failed + 1`; \
+	echo "XPASS: $tst"; \
+      ;; \
+      *) \
+	echo "PASS: $tst"; \
+      ;; \
+      esac; \
+    elif test $? -ne 77; then \
+      all=`expr $all + 1`; \
+      case "  " in \
+      *$ws$tst$ws*) \
+	xfail=`expr $xfail + 1`; \
+	echo "XFAIL: $tst"; \
+      ;; \
+      *) \
+	failed=`expr $failed + 1`; \
+	echo "FAIL: $tst"; \
+      ;; \
+      esac; \
+    else \
+      skip=`expr $skip + 1`; \
+      echo "SKIP: $tst"; \
+    fi; \
+  done; \
+  if test "$failed" -eq 0; then \
+    if test "$xfail" -eq 0; then \
+      banner="All $all tests passed"; \
+    else \
+      banner="All $all tests behaved as expected ($xfail expected failures)"; \
+    fi; \
+  else \
+    if test "$xpass" -eq 0; then \
+      banner="$failed of $all tests failed"; \
+    else \
+      banner="$failed of $all tests did not behave as expected ($xpass unexpected passes)"; \
+    fi; \
+  fi; \
+  dashes="$banner"; \
+  skipped=""; \
+  if test "$skip" -ne 0; then \
+    skipped="($skip tests were not run)"; \
+    test `echo "$skipped" | wc -c` -le `echo "$banner" | wc -c` || \
+      dashes="$skipped"; \
+  fi; \
+  report=""; \
+  if test "$failed" -ne 0 && test -n "kientzle@freebsd.org"; then \
+    report="Please report to kientzle@freebsd.org"; \
+    test `echo "$report" | wc -c` -le `echo "$banner" | wc -c` || \
+      dashes="$report"; \
+  fi; \
+  dashes=`echo "$dashes" | sed s/./=/g`; \
+  echo "$dashes"; \
+  echo "$banner"; \
+  test -z "$skipped" || echo "$skipped"; \
+  test -z "$report" || echo "$report"; \
+  echo "$dashes"; \
+  test "$failed" -eq 0; \
+else :; fi
+make: Fatal error: Command failed for target `check-TESTS'
+Current working directory /export/home/cue/proj/libarchive-2.7.902a
+*** Error code 1
+make: Fatal error: Command failed for target `check-am'
+Current working directory /export/home/cue/proj/libarchive-2.7.902a
+*** Error code 1
+make: Fatal error: Command failed for target `check'

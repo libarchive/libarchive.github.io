@@ -1,0 +1,22 @@
+==28241== Memcheck, a memory error detector
+==28241== Copyright (C) 2002-2012, and GNU GPL'd, by Julian Seward et al.
+==28241== Using Valgrind-3.8.1 and LibVEX; rerun with -h for copyright info
+==28241== Command: ./archive path.apk
+==28241== 
+libarchive_version: 3001002
+(paths...)
+==28241== 
+==28241== HEAP SUMMARY:
+==28241==     in use at exit: 263,318 bytes in 596 blocks
+==28241==   total heap usage: 5,788 allocs, 5,192 frees, 560,669 bytes allocated
+==28241== 
+==28241== LEAK SUMMARY:
+==28241==    definitely lost: 2,144 bytes in 1 blocks
+==28241==    indirectly lost: 261,174 bytes in 595 blocks
+==28241==      possibly lost: 0 bytes in 0 blocks
+==28241==    still reachable: 0 bytes in 0 blocks
+==28241==         suppressed: 0 bytes in 0 blocks
+==28241== Rerun with --leak-check=full to see details of leaked memory
+==28241== 
+==28241== For counts of detected and suppressed errors, rerun with: -v
+==28241== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 2 from 2)

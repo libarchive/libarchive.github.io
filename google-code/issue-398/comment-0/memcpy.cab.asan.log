@@ -1,0 +1,37 @@
+bsdtar: Multivolume cabinet file is unsupported
+bsdtar: Removing leading '/' from member names
+=================================================================
+==20142==ERROR: AddressSanitizer: memcpy-param-overlap: memory ranges [0x60300000ee60,0x60300000ee62) and [0x60300000ee61, 0x60300000ee63) overlap
+    #0 0x7fdb71ab1e94 (/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.2/libasan.so.1+0x2fe94)
+    #1 0x6687fa in memcpy /usr/include/bits/string3.h:51
+    #2 0x6687fa in archive_string_append /mnt/ram/libarchive/libarchive/archive_string.c:206
+    #3 0x6687fa in archive_strncat /mnt/ram/libarchive/libarchive/archive_string.c:342
+    #4 0x6687fa in archive_mstring_copy_mbs_len /mnt/ram/libarchive/libarchive/archive_string.c:4051
+    #5 0x6687fa in archive_mstring_copy_mbs /mnt/ram/libarchive/libarchive/archive_string.c:4039
+    #6 0x430626 in edit_pathname /mnt/ram/libarchive/tar/util.c:555
+    #7 0x425c4b in read_archive /mnt/ram/libarchive/tar/read.c:331
+    #8 0x425c4b in tar_mode_x /mnt/ram/libarchive/tar/read.c:104
+    #9 0x415789 in main /mnt/ram/libarchive/tar/bsdtar.c:805
+    #10 0x7fdb706f8f9f in __libc_start_main (/lib64/libc.so.6+0x1ff9f)
+    #11 0x41b10d (/mnt/ram/libarchive/b/bin/bsdtar+0x41b10d)
+
+0x60300000ee60 is located 0 bytes inside of 32-byte region [0x60300000ee60,0x60300000ee80)
+allocated by thread T0 here:
+    #0 0x7fdb71ad99d6 in __interceptor_realloc (/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.2/libasan.so.1+0x579d6)
+    #1 0x66f06c in archive_string_ensure /mnt/ram/libarchive/libarchive/archive_string.c:307
+    #2 0x66f06c in archive_string_append /mnt/ram/libarchive/libarchive/archive_string.c:204
+    #3 0x66f06c in archive_strncat_l /mnt/ram/libarchive/libarchive/archive_string.c:1963
+    #4 0x66f06c in archive_strncpy_l /mnt/ram/libarchive/libarchive/archive_string.c:1933
+    #5 0x66f06c in archive_mstring_copy_mbs_len_l /mnt/ram/libarchive/libarchive/archive_string.c:4165
+
+0x60300000ee61 is located 1 bytes inside of 32-byte region [0x60300000ee60,0x60300000ee80)
+allocated by thread T0 here:
+    #0 0x7fdb71ad99d6 in __interceptor_realloc (/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.2/libasan.so.1+0x579d6)
+    #1 0x66f06c in archive_string_ensure /mnt/ram/libarchive/libarchive/archive_string.c:307
+    #2 0x66f06c in archive_string_append /mnt/ram/libarchive/libarchive/archive_string.c:204
+    #3 0x66f06c in archive_strncat_l /mnt/ram/libarchive/libarchive/archive_string.c:1963
+    #4 0x66f06c in archive_strncpy_l /mnt/ram/libarchive/libarchive/archive_string.c:1933
+    #5 0x66f06c in archive_mstring_copy_mbs_len_l /mnt/ram/libarchive/libarchive/archive_string.c:4165
+
+SUMMARY: AddressSanitizer: memcpy-param-overlap ??:0 ??
+==20142==ABORTING

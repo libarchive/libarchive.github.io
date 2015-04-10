@@ -1,0 +1,51 @@
+=================================================================
+==30653==ERROR: AddressSanitizer: global-buffer-overflow on address 0x000000847ce2 at pc 0x43a436 bp 0x7fffac6e6680 sp 0x7fffac6e6670
+READ of size 6 at 0x000000847ce2 thread T0
+    #0 0x43a435 in ae_strtofflags libarchive/archive_entry.c:1753
+    #1 0x43a435 in archive_entry_copy_fflags_text libarchive/archive_entry.c:808
+    #2 0x577450 in parse_keyword libarchive/archive_read_support_format_mtree.c:1474
+    #3 0x5795d4 in parse_line libarchive/archive_read_support_format_mtree.c:1315
+    #4 0x5795d4 in parse_file libarchive/archive_read_support_format_mtree.c:1094
+    #5 0x5795d4 in read_header libarchive/archive_read_support_format_mtree.c:1061
+    #6 0x46c4d2 in _archive_read_next_header2 libarchive/archive_read.c:645
+    #7 0x46c4d2 in _archive_read_next_header libarchive/archive_read.c:685
+    #8 0x41b0b2 in read_archive tar/read.c:252
+    #9 0x41d243 in tar_mode_x tar/read.c:104
+    #10 0x40d78f in main tar/bsdtar.c:805
+    #11 0x7feaa549bf9f in __libc_start_main (/lib64/libc.so.6+0x1ff9f)
+    #12 0x412d81 (/mnt/ram/libarchive/bsdtar+0x412d81)
+
+0x000000847ce2 is located 62 bytes to the left of global variable '*.LC149' from 'libarchive/archive_entry.c' (0x847d20) of size 28
+0x000000847ce7 is located 0 bytes to the right of global variable '*.LC148' from 'libarchive/archive_entry.c' (0x847ce0) of size 7
+  '*.LC148' is ascii string 'noschg'
+SUMMARY: AddressSanitizer: global-buffer-overflow libarchive/archive_entry.c:1753 ae_strtofflags
+Shadow bytes around the buggy address:
+  0x000080100f40: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x000080100f50: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x000080100f60: 00 00 00 00 00 00 00 00 00 00 00 00 00 02 f9 f9
+  0x000080100f70: f9 f9 f9 f9 00 01 f9 f9 f9 f9 f9 f9 00 00 00 00
+  0x000080100f80: 04 f9 f9 f9 f9 f9 f9 f9 00 02 f9 f9 f9 f9 f9 f9
+=>0x000080100f90: 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9[07]f9 f9 f9
+  0x000080100fa0: f9 f9 f9 f9 00 00 00 04 f9 f9 f9 f9 00 02 f9 f9
+  0x000080100fb0: f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9
+  0x000080100fc0: 00 05 f9 f9 f9 f9 f9 f9 00 00 00 00 00 00 04 f9
+  0x000080100fd0: f9 f9 f9 f9 07 f9 f9 f9 f9 f9 f9 f9 00 00 00 04
+  0x000080100fe0: f9 f9 f9 f9 00 02 f9 f9 f9 f9 f9 f9 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Heap right redzone:      fb
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack partial redzone:   f4
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Contiguous container OOB:fc
+  ASan internal:           fe
+==30653==ABORTING

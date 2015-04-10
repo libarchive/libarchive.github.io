@@ -1,0 +1,2572 @@
+diff -urN old/libarchive/CMakeLists.txt new/libarchive/CMakeLists.txt
+--- old/libarchive/CMakeLists.txt	2009-03-15 11:43:54.000000000 -0400
++++ new/libarchive/CMakeLists.txt	2009-03-15 23:51:43.743200000 -0400
+@@ -27,11 +27,11 @@
+ SET(LIBARCHIVE_VERSION_STRING  "${VERSION}")
+ 
+ OPTION(ENABLE_TAR "Enable tar building" ON)
+-IF(WIN32)
++IF(WIN32 AND NOT CYGWIN)
+ OPTION(ENABLE_CPIO "Enable cpio building" OFF)
+-ELSE(WIN32)
++ELSE(WIN32 AND NOT CYGWIN)
+ OPTION(ENABLE_CPIO "Enable cpio building" ON)
+-ENDIF(WIN32)
++ENDIF(WIN32 AND NOT CYGWIN)
+ OPTION(ENABLE_XATTR "Enable extended attribute support" ON)
+ OPTION(ENABLE_ACL "Enable ACL support" ON)
+ OPTION(ENABLE_TEST "Enable unit and regression tests" ON)
+@@ -78,7 +78,7 @@
+ # Check compress/decompress libraries
+ #
+ SET(__GNUWIN32PATH "C:/Program Files/GnuWin32")
+-IF(WIN32 AND EXISTS "${__GNUWIN32PATH}")
++IF(WIN32 AND NOT CYGWIN AND EXISTS "${__GNUWIN32PATH}")
+   # You have to add a path availabel DLL file into PATH environment variable.
+   # Maybe DLL path is "C:/Program Files/GnuWin32/bin".
+   # The zlib and the bzip2 Setup program have installed programs and DLLs into
+@@ -104,7 +104,7 @@
+   # #  ifdef VMS
+   # #    include <unixio.h>   /* for off_t */
+   # #  endif
+-ENDIF(WIN32 AND EXISTS "${__GNUWIN32PATH}")
++ENDIF(WIN32 AND NOT CYGWIN AND EXISTS "${__GNUWIN32PATH}")
+ 
+ SET(ADDITIONAL_LIBS "")
+ #
+@@ -594,11 +594,11 @@
+   libarchive/tar.5
+ )
+ 
+-IF(WIN32)
++IF(WIN32 AND NOT CYGWIN)
+   LIST(APPEND libarchive_SOURCES libarchive/archive_windows.c)
+   LIST(APPEND libarchive_SOURCES libarchive/archive_windows.h)
+   LIST(APPEND libarchive_SOURCES libarchive/filter_fork_windows.c)
+-ENDIF(WIN32)
++ENDIF(WIN32 AND NOT CYGWIN)
+ 
+ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/libarchive)
+ #
+@@ -739,10 +739,14 @@
+     tar/util.c
+     tar/write.c
+   )
+-  IF(WIN32)
++  IF(WIN32 AND NOT CYGWIN)
+     LIST(APPEND bsdtar_SOURCES tar/bsdtar_windows.c)
+     LIST(APPEND bsdtar_SOURCES tar/bsdtar_windows.h)
+-  ENDIF(WIN32)
++  ENDIF(WIN32 AND NOT CYGWIN)
++  IF(CYGWIN)
++    LIST(APPEND bsdtar_SOURCES tar/bsdtar_cygwin.c)
++    LIST(APPEND bsdtar_SOURCES tar/bsdtar_cygwin.h)
++  ENDIF(CYGWIN)
+ 
+   SET(bsdtar_MANS tar/bsdtar.1)
+ 
+@@ -777,11 +781,15 @@
+     tar/test/test_symlink_dir.c
+     tar/test/test_version.c
+   )
+-  IF(WIN32)
++  IF(WIN32 AND NOT CYGWIN)
+     LIST(APPEND bsdtar_test_SOURCES tar/bsdtar_windows.c)
+     LIST(APPEND bsdtar_test_SOURCES tar/bsdtar_windows.h)
+     LIST(APPEND bsdtar_test_SOURCES tar/test/test_windows.c)
+-  ENDIF(WIN32)
++  ENDIF(WIN32 AND NOT CYGWIN)
++  IF(CYGWIN)
++    LIST(APPEND bsdtar_test_SOURCES tar/bsdtar_cygwin.c)
++    LIST(APPEND bsdtar_test_SOURCES tar/bsdtar_cygwin.h)
++  ENDIF(CYGWIN)
+ 
+   #
+   # Generate the list.h
+@@ -794,17 +802,17 @@
+   ADD_EXECUTABLE(bsdtar_test ${bsdtar_test_SOURCES})
+   SET_PROPERTY(TARGET bsdtar_test PROPERTY COMPILE_DEFINITIONS
+     LIST_H="${CMAKE_CURRENT_BINARY_DIR}/tar/test/list.h")
+-  IF(WIN32)
++  IF(WIN32 AND NOT CYGWIN)
+     ADD_TEST(bsdtar_test bsdtar_test
+       -v
+       -p ${CMAKE_CURRENT_BINARY_DIR}/debug/bsdtar.exe
+       -r ${CMAKE_CURRENT_SOURCE_DIR}/tar/test)
+-  ELSE(WIN32)
++  ELSE(WIN32 AND NOT CYGWIN)
+     ADD_TEST(bsdtar_test bsdtar_test
+       -v
+       -p ${CMAKE_CURRENT_BINARY_DIR}/bsdtar
+       -r ${CMAKE_CURRENT_SOURCE_DIR}/tar/test)
+-  ENDIF(WIN32)
++  ENDIF(WIN32 AND NOT CYGWIN)
+ 
+ ENDIF (ENABLE_TAR AND ENABLE_TEST)
+ 
+@@ -825,10 +833,14 @@
+     cpio/pathmatch.c
+     cpio/pathmatch.h
+   )
+-  IF(WIN32)
++  IF(WIN32 AND NOT CYGWIN)
+     LIST(APPEND bsdcpio_SOURCES cpio/cpio_windows.c)
+     LIST(APPEND bsdcpio_SOURCES cpio/cpio_windows.h)
+-  ENDIF(WIN32)
++  ENDIF(WIN32 AND NOT CYGWIN)
++  IF(CYGWIN)
++    LIST(APPEND bsdcpio_SOURCES cpio/cpio_cygwin.c)
++    LIST(APPEND bsdcpio_SOURCES cpio/cpio_cygwin.h)
++  ENDIF(CYGWIN)
+ 
+   #
+   # Register target
+@@ -872,10 +884,14 @@
+     cpio/test/test_passthrough_reverse.c
+     cpio/test/test_pathmatch.c
+   )
+-  IF(WIN32)
++  IF(WIN32 AND NOT CYGWIN)
+     LIST(APPEND bsdcpio_test_SOURCES cpio/cpio_windows.c)
+     LIST(APPEND bsdcpio_test_SOURCES cpio/cpio_windows.h)
+-  ENDIF(WIN32)
++  ENDIF(WIN32 AND NOT CYGWIN)
++  IF(CYGWIN)
++    LIST(APPEND bsdcpio_test_SOURCES cpio/cpio_cygwin.c)
++    LIST(APPEND bsdcpio_test_SOURCES cpio/cpio_cygwin.h)
++  ENDIF(CYGWIN)
+ 
+   SET(bsdcpio_MANS cpio/bsdcpio.1)
+ 
+@@ -884,17 +900,17 @@
+   ADD_EXECUTABLE(bsdcpio_test ${bsdcpio_test_SOURCES})
+   SET_PROPERTY(TARGET bsdcpio_test PROPERTY COMPILE_DEFINITIONS
+     LIST_H="${CMAKE_CURRENT_BINARY_DIR}/cpio/test/list.h")
+-  IF(WIN32)
++  IF(WIN32 AND NOT CYGWIN)
+     ADD_TEST(bsdcpio_test bsdcpio_test
+      -v
+      -p ${CMAKE_CURRENT_BINARY_DIR}/debug/bsdcpio.exe
+      -r ${CMAKE_CURRENT_SOURCE_DIR}/cpio/test)
+-  ELSE(WIN32)
++  ELSE(WIN32 AND NOT CYGWIN)
+     ADD_TEST(bsdcpio_test bsdcpio_test
+      -v
+      -p ${CMAKE_CURRENT_BINARY_DIR}/bsdcpio
+      -r ${CMAKE_CURRENT_SOURCE_DIR}/cpio/test)
+-  ENDIF(WIN32)
++  ENDIF(WIN32 AND NOT CYGWIN)
+ 
+ ENDIF(ENABLE_CPIO AND ENABLE_TEST)
+ 
+diff -urN old/libarchive/Makefile.am new/libarchive/Makefile.am
+--- old/libarchive/Makefile.am	2009-03-15 11:43:54.000000000 -0400
++++ new/libarchive/Makefile.am	2009-03-15 23:51:43.758800000 -0400
+@@ -152,6 +152,13 @@
+ 	libarchive/filter_fork.c				\
+ 	libarchive/filter_fork.h
+ 
++if INC_WINDOWS_FILES
++libarchive_la_SOURCES+=						\
++	libarchive/archive_windows.h				\
++	libarchive/archive_windows.c				\
++	libarchive/filter_fork_windows.c
++endif
++
+ libarchive_la_CPPFLAGS=-I $(top_builddir)/libarchive
+ # -no-undefined marks that libarchive doesn't rely on symbols
+ # defined in the application.  This is mandatory for cygwin.
+@@ -177,6 +184,7 @@
+ 	libarchive/test/list.h		\
+ 	libarchive/archive_windows.c	\
+ 	libarchive/archive_windows.h	\
++	libarchive/filter_fork_windows.c	\
+ 	$(libarchive_man_MANS)
+ 
+ #
+@@ -266,7 +274,7 @@
+ 	libarchive/test/test_write_format_tar_ustar.c		\
+ 	libarchive/test/test_write_open_memory.c
+ 
+-libarchive_test_CPPFLAGS= -I$(top_builddir)/libarchive -I$(top_srcdir)/libarchive -I$(top_builddir)/libarchive/test
++libarchive_test_CPPFLAGS= -I$(top_builddir)/libarchive -I$(top_srcdir)/libarchive -I$(top_builddir)/libarchive/test -DLIBARCHIVE_STATIC
+ 
+ # The "list.h" file just lists all of the tests defined in all of the sources.
+ # Building it automatically provides a sanity-check on libarchive_test_SOURCES
+@@ -321,6 +329,17 @@
+ 		tar/util.c		\
+ 		tar/write.c
+ 
++if INC_WINDOWS_FILES
++bsdtar_SOURCES+=			\
++		tar/bsdtar_windows.h	\
++		tar/bsdtar_windows.c
++endif
++if INC_CYGWIN_FILES
++bsdtar_SOURCES+=			\
++		tar/bsdtar_cygwin.h	\
++		tar/bsdtar_cygwin.c
++endif
++
+ bsdtar_DEPENDENCIES= libarchive.la
+ 
+ if STATIC_BSDTAR
+@@ -330,10 +349,17 @@
+ endif
+ 
+ bsdtar_LDADD= libarchive.la
++if INC_CYGWIN_FILES
++bsdtar_LDADD+=/usr/lib/binmode.o
++endif
+ bsdtar_CPPFLAGS= -I$(top_builddir)/libarchive -I$(top_srcdir)/libarchive
+ bsdtar_LDFLAGS= $(bsdtar_static)
+ bsdtar_EXTRA_DIST=		\
+-	tar/bsdtar.1
++	tar/bsdtar.1		\
++	tar/bsdtar_windows.h	\
++	tar/bsdtar_windows.c	\
++	tar/bsdtar_cygwin.h	\
++	tar/bsdtar_cygwin.c
+ 
+ if BUILD_BSDTAR
+ bsdtar_man_MANS= tar/bsdtar.1
+@@ -366,6 +392,16 @@
+ 	tar/test/test_version.c					\
+ 	tar/test/test_windows.c
+ 
++if INC_WINDOWS_FILES
++bsdtar_test_SOURCES+=						\
++	tar/test/test_windows.c
++endif
++
++bsdtar_test_LDADD=$(LDADD)
++if INC_CYGWIN_FILES
++bsdtar_test_LDADD+=/usr/lib/binmode.o
++endif
++
+ bsdtar_test_CPPFLAGS= -I$(top_builddir)/tar/test
+ 
+ tar/test/list.h: Makefile
+@@ -382,7 +418,8 @@
+ bsdtar_test_EXTRA_DIST=			\
+ 	tar/test/test_patterns_2.tar.uu	\
+ 	tar/test/test_patterns_3.tar.uu	\
+-	tar/test/test_patterns_4.tar.uu
++	tar/test/test_patterns_4.tar.uu	\
++	tar/test/test_windows.c
+ 
+ 
+ #
+@@ -402,6 +439,17 @@
+ 		cpio/pathmatch.c	\
+ 		cpio/pathmatch.h
+ 
++if INC_WINDOWS_FILES
++bsdcpio_SOURCES+=			\
++		cpio/cpio_windows.h	\
++		cpio/cpio_windows.c
++endif
++if INC_CYGWIN_FILES
++bsdcpio_SOURCES+=			\
++		cpio/cpio_cygwin.h	\
++		cpio/cpio_cygwin.c
++endif
++
+ bsdcpio_DEPENDENCIES = libarchive.la
+ 
+ 
+@@ -412,11 +460,18 @@
+ endif
+ 
+ bsdcpio_LDADD= libarchive.la
++if INC_CYGWIN_FILES
++bsdcpio_LDADD+=/usr/lib/binmode.o
++endif
+ bsdcpio_CPPFLAGS= -I$(top_builddir)/libarchive -I$(top_srcdir)/libarchive
+ bsdcpio_LDFLAGS= $(bsdcpio_static)
+ bsdcpio_EXTRA_DIST=		\
+ 	cpio/test/list.h	\
+-	cpio/bsdcpio.1
++	cpio/bsdcpio.1		\
++	cpio/bsdcpio_windows.h	\
++	cpio/bsdcpio_windows.c	\
++	cpio/bsdcpio_cygwin.h	\
++	cpio/bsdcpio_cygwin.c
+ 
+ if BUILD_BSDCPIO
+ # Manpages to install
+@@ -460,6 +515,11 @@
+ 	cpio/test/test_passthrough_reverse.c			\
+ 	cpio/test/test_pathmatch.c
+ 
++bsdcpio_test_LDADD=$(LDADD)
++if INC_CYGWIN_FILES
++bsdcpio_test_LDADD+=/usr/lib/binmode.o
++endif
++
+ bsdcpio_test_CPPFLAGS= -I$(top_builddir)/libarchive -I$(top_srcdir)/libarchive -I$(top_builddir)/cpio/test
+ 
+ cpio/test/list.h: Makefile
+diff -urN old/libarchive/configure.ac new/libarchive/configure.ac
+--- old/libarchive/configure.ac	2009-03-15 11:43:54.000000000 -0400
++++ new/libarchive/configure.ac	2009-03-15 23:51:43.758800000 -0400
+@@ -63,11 +63,25 @@
+ AC_CONFIG_HEADERS([config.h])
+ AC_CONFIG_FILES([Makefile])
+ 
++# Check for host type
++AC_CANONICAL_HOST
++
++dnl Compilation on mingw and Cygwin needs special Makefile rules
++inc_windows_files=no
++inc_cygwin_files=no
++case "$host_os" in
++dnl is there a $host_os for msvc? how should interix behave?
++  mingw* ) inc_windows_files=yes ;;
++  cygwin*) inc_cygwin_files=yes ;;
++esac
++AM_CONDITIONAL([INC_WINDOWS_FILES], [test $inc_windows_files = yes])
++AM_CONDITIONAL([INC_CYGWIN_FILES], [test $inc_cygwin_files = yes])
++
+ # Checks for programs.
+ AC_PROG_CC
+ AM_PROG_CC_C_O
+ AC_PROG_YACC
+-AC_PROG_LIBTOOL
++LT_INIT([win32-dll])
+ AC_CHECK_TOOL([STRIP],[strip])
+ 
+ #
+@@ -170,6 +184,12 @@
+ AC_CHECK_HEADERS([sys/param.h sys/poll.h sys/select.h sys/time.h sys/utime.h])
+ AC_CHECK_HEADERS([time.h unistd.h utime.h wchar.h wctype.h windows.h])
+ 
++# Checks for types
++AC_CHECK_TYPE([wchar_t],
++  [AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_[]wchar_t), 1,
++                      [Define to 1 if the system has the type `wchar_t'.])dnl'`
++   AC_CHECK_SIZEOF([wchar_t])], [])
++
+ # Checks for libraries.
+ AC_ARG_WITH([zlib],
+   AS_HELP_STRING([--without-zlib], [Don't build support for gzip through zlib]))
+diff -urN old/libarchive/cpio/cpio.c new/libarchive/cpio/cpio.c
+--- old/libarchive/cpio/cpio.c	2009-03-15 11:43:53.000000000 -0400
++++ new/libarchive/cpio/cpio.c	2009-03-15 23:51:43.758800000 -0400
+@@ -66,6 +66,16 @@
+ #ifdef HAVE_UNISTD_H
+ #include <unistd.h>
+ #endif
++#ifdef TIME_WITH_SYS_TIME
++# include <sys/time.h>
++# include <time.h>
++#else
++# ifdef HAVE_SYS_TIME_H
++#  include <sys/time.h>
++# else
++#  include <time.h>
++# endif
++#endif
+ 
+ #include "cpio.h"
+ #include "matching.h"
+@@ -118,8 +128,10 @@
+ 	memset(cpio, 0, sizeof(*cpio));
+ 	cpio->buff = buff;
+ 	cpio->buff_size = sizeof(buff);
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* Make sure open() function will be used with a binary mode. */
++	/* on cygwin, we need something similar, but instead link against */
++	/* a special startup object, binmode.o */
+ 	_set_fmode(_O_BINARY);
+ #endif
+ 
+@@ -127,7 +139,7 @@
+ 	if (*argv == NULL)
+ 		cpio_progname = "bsdcpio";
+ 	else {
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 		cpio_progname = strrchr(*argv, '\\');
+ #else
+ 		cpio_progname = strrchr(*argv, '/');
+@@ -155,7 +167,7 @@
+ 	cpio->extract_flags |= ARCHIVE_EXTRACT_PERM;
+ 	cpio->extract_flags |= ARCHIVE_EXTRACT_FFLAGS;
+ 	cpio->extract_flags |= ARCHIVE_EXTRACT_ACL;
+-#ifdef _WIN32
++#if defined(_WIN32) || defined(__CYGWIN__)
+ 	if (bsdcpio_is_privileged())
+ #else
+ 	if (geteuid() == 0)
+@@ -482,7 +494,7 @@
+ 	struct archive_entry *entry, *spare;
+ 	size_t len;
+ 	const char *p;
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	int lnklen;
+ #endif
+ 	int r;
+@@ -514,7 +526,7 @@
+ 		st.st_gid = cpio->uid_override;
+ 	archive_entry_copy_stat(entry, &st);
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	/* If its a symlink, pull the target. */
+ 	if (S_ISLNK(st.st_mode)) {
+ 		lnklen = readlink(srcpath, cpio->buff, cpio->buff_size);
+@@ -706,7 +718,7 @@
+ 	warned = 1;
+ 	return (fd);
+ #else
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	struct __timeval times[2];
+ #else
+ 	struct timeval times[2];
+@@ -937,7 +949,7 @@
+ 
+ 	/* Format the time using 'ls -l' conventions. */
+ 	tim = (time_t)st->st_mtime;
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* Windows' strftime function does not support %e format. */
+ 	if (abs(tim - now) > (365/2)*86400)
+ 		fmt = cpio->day_first ? "%d %b  %Y" : "%b %d  %Y";
+diff -urN old/libarchive/cpio/cpio_cygwin.c new/libarchive/cpio/cpio_cygwin.c
+--- old/libarchive/cpio/cpio_cygwin.c	1969-12-31 19:00:00.000000000 -0500
++++ new/libarchive/cpio/cpio_cygwin.c	2009-03-15 23:51:43.774400000 -0400
+@@ -0,0 +1,139 @@
++/*-
++ * Copyright (c) 2009 Michihiro NAKAJIMA
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++ * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ *
++ * $FreeBSD$
++ */
++
++#if defined(__CYGWIN__)
++#define _WIN32_WINNT	0x500
++#define WINVER		0x500
++
++#include "cpio_platform.h"
++#include <errno.h>
++#include <stddef.h>
++#include <sys/utime.h>
++#include <sys/stat.h>
++#include <process.h>
++#include <stdlib.h>
++#include <wchar.h>
++#include <windows.h>
++#include <sddl.h>
++
++#include "cpio.h"
++
++#ifndef LIST_H
++static int
++_is_privileged(HANDLE thandle, const char *sidlist[])
++{
++	TOKEN_USER *tuser;
++	TOKEN_GROUPS  *tgrp;
++	DWORD bytes;
++	PSID psid;
++	DWORD i, g;
++	int member;
++
++	psid = NULL;
++	tuser = NULL;
++	tgrp = NULL;
++	member = 0;
++	for (i = 0; sidlist[i] != NULL && member == 0; i++) {
++		if (psid != NULL)
++			LocalFree(psid);
++		/* mingw/cygwin: incorrectly prototypes arg 1 as LPSTR
++		 * instead of LPCSTR. Work around it here
++		 */
++		if (ConvertStringSidToSidA((char *)sidlist[i], &psid) == 0) {
++			errno = EPERM;
++			return (-1);
++		}
++		if (tuser == NULL) {
++			GetTokenInformation(thandle, TokenUser, NULL, 0, &bytes);
++			tuser = malloc(bytes);
++			if (tuser == NULL) {
++				errno = ENOMEM;
++				member = -1;
++				break;
++			}
++			if (GetTokenInformation(thandle, TokenUser, tuser, bytes, &bytes) == 0) {
++				errno = EPERM;
++				member = -1;
++				break;
++			}
++		}
++		member = EqualSid(tuser->User.Sid, psid);
++		if (member)
++			break;
++		if (tgrp == NULL) {
++			GetTokenInformation(thandle, TokenGroups, NULL, 0, &bytes);
++			tgrp = malloc(bytes);
++			if (tgrp == NULL) {
++				errno = ENOMEM;
++				member = -1;
++				break;
++			}
++			if (GetTokenInformation(thandle, TokenGroups, tgrp, bytes, &bytes) == 0) {
++				errno = EPERM;
++				member = -1;
++				break;
++			}
++		}
++		for (g = 0; g < tgrp->GroupCount; g++) {
++			member = EqualSid(tgrp->Groups[g].Sid, psid);
++			if (member)
++				break;
++		}
++	}
++	LocalFree(psid);
++	free(tuser);
++	free(tgrp);
++
++	return (member);
++}
++
++int
++bsdcpio_is_privileged()
++{
++	HANDLE thandle;
++	int ret;
++	const char *sidlist[] = {
++		"S-1-5-32-544",	/* Administrators */
++		"S-1-5-32-551", /* Backup Operators */
++		NULL
++	};
++
++	if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &thandle) == 0) {
++		cpio_warnc(EPERM, "Failed to check privilege");
++		return (0);
++	}
++	ret = _is_privileged(thandle, sidlist);
++	if (ret < 0) {
++		cpio_warnc(errno, "Failed to check privilege");
++		return (0);
++	}
++	return (ret);
++}
++
++#endif /* LIST_H */
++
++#endif
+diff -urN old/libarchive/cpio/cpio_cygwin.h new/libarchive/cpio/cpio_cygwin.h
+--- old/libarchive/cpio/cpio_cygwin.h	1969-12-31 19:00:00.000000000 -0500
++++ new/libarchive/cpio/cpio_cygwin.h	2009-03-15 23:51:43.774400000 -0400
+@@ -0,0 +1,41 @@
++/*-
++ * Copyright (c) 2009 Michihiro NAKAJIMA
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++ * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ *
++ * $FreeBSD$
++ */
++
++#ifndef CPIO_CYGWIN_H
++#define CPIO_CYGWIN_H 1
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++extern int		bsdcpio_is_privileged();
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* CPIO_CYGWIN_H */
+diff -urN old/libarchive/cpio/cpio_platform.h new/libarchive/cpio/cpio_platform.h
+--- old/libarchive/cpio/cpio_platform.h	2009-03-15 11:43:53.000000000 -0400
++++ new/libarchive/cpio/cpio_platform.h	2009-03-15 23:51:43.774400000 -0400
+@@ -89,8 +89,10 @@
+ #define __LA_DEAD
+ #endif
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #include "cpio_windows.h"
++#elif defined(__CYGWIN__)
++#include "cpio_cygwin.h"
+ #endif
+ 
+ #endif /* !CPIO_PLATFORM_H_INCLUDED */
+diff -urN old/libarchive/cpio/cpio_windows.c new/libarchive/cpio/cpio_windows.c
+--- old/libarchive/cpio/cpio_windows.c	2009-03-15 11:43:53.000000000 -0400
++++ new/libarchive/cpio/cpio_windows.c	2009-03-15 23:51:43.774400000 -0400
+@@ -25,8 +25,9 @@
+  * $FreeBSD$
+  */
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #define _WIN32_WINNT	0x500
++#define WINVER		0x500
+ 
+ #include "cpio_platform.h"
+ #include <errno.h>
+diff -urN old/libarchive/cpio/test/main.c new/libarchive/cpio/test/main.c
+--- old/libarchive/cpio/test/main.c	2009-03-15 11:43:53.000000000 -0400
++++ new/libarchive/cpio/test/main.c	2009-03-15 23:51:43.790000000 -0400
+@@ -819,7 +819,7 @@
+ 	/* If there were no failures, we can remove the work dir. */
+ 	if (failures == failures_before) {
+ 		if (!keep_temp_files && chdir(tmpdir) == 0) {
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 			systemf("rmdir /S /Q %s", tests[i].name);
+ #else
+ 			systemf("rm -rf %s", tests[i].name);
+@@ -922,7 +922,7 @@
+ 	int i, tests_run = 0, tests_failed = 0, opt;
+ 	time_t now;
+ 	char *refdir_alloc = NULL;
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	char *testprg;
+ #endif
+ 	const char *opt_arg, *progname, *p;
+@@ -931,8 +931,10 @@
+ 
+ 	(void)argc; /* UNUSED */
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* Make sure open() function will be used with a binary mode. */
++	/* on cygwin, we need something similar, but instead link against */
++	/* a special startup object, binmode.o */
+ 	_set_fmode(_O_BINARY);
+ #endif
+ 	/*
+@@ -1023,7 +1025,7 @@
+ 	if (testprog == NULL)
+ 		usage(progname);
+ #endif
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/*
+ 	 * Command.exe cannot accept the command used '/' with drive
+ 	 * name such as c:/xxx/command.exe when use '|' pipe handling.
+diff -urN old/libarchive/cpio/test/test.h new/libarchive/cpio/test/test.h
+--- old/libarchive/cpio/test/test.h	2009-03-15 11:43:53.000000000 -0400
++++ new/libarchive/cpio/test/test.h	2009-03-15 23:51:43.790000000 -0400
+@@ -37,7 +37,7 @@
+ #elif defined(__FreeBSD__)
+ /* Building as part of FreeBSD system requires a pre-built config.h. */
+ #include "config_freebsd.h"
+-#elif defined(_WIN32)
++#elif defined(_WIN32) && !defined(__CYGWIN__)
+ /* Win32 can't run the 'configure' script. */
+ #include "config_windows.h"
+ #else
+@@ -45,18 +45,30 @@
+ #error Oops: No config.h and no pre-built configuration in test.h.
+ #endif
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ #include <dirent.h>
+ #else
+ #include "../cpio_windows.h"
+ #endif
++#if defined(__CYGWIN__)
++/* In cygwin-1.7.x, the .nlinks field of directories is
++ * deliberately inaccurate, because to populate it requires
++ * stat'ing every file in the directory, which is slow.
++ * So, as an optimization cygwin doesn't do that in newer
++ * releases; all correct applications on any platform should
++ * never rely on it being > 1, so this optimization doesn't
++ * impact the operation of correctly coded applications.
++ * Therefore, the cpio test should not check its accuracy
++ */
++# define NLINKS_INACCURATE_FOR_DIRS
++#endif
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #include <sys/stat.h>
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ #include <unistd.h>
+ #else
+ #include <time.h>
+diff -urN old/libarchive/cpio/test/test_0.c new/libarchive/cpio/test/test_0.c
+--- old/libarchive/cpio/test/test_0.c	2009-03-15 11:43:52.000000000 -0400
++++ new/libarchive/cpio/test/test_0.c	2009-03-15 23:51:43.790000000 -0400
+@@ -29,7 +29,7 @@
+  * This first test does basic sanity checks on the environment.  For
+  * most of these, we just exit on failure.
+  */
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ #define DEV_NULL "/dev/null"
+ #else
+ #define DEV_NULL "NUL"
+diff -urN old/libarchive/cpio/test/test_basic.c new/libarchive/cpio/test/test_basic.c
+--- old/libarchive/cpio/test/test_basic.c	2009-03-15 11:43:53.000000000 -0400
++++ new/libarchive/cpio/test/test_basic.c	2009-03-15 23:51:43.790000000 -0400
+@@ -29,7 +29,7 @@
+ verify_files(const char *target)
+ {
+ 	struct stat st, st2;
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	char buff[128];
+ #endif
+ 	int r;
+@@ -44,7 +44,7 @@
+ 	assertEqualInt(r, 0);
+ 	if (r == 0) {
+ 		assert(S_ISREG(st.st_mode));
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 		/* Group members bits and others bits do not work. */
+ 		assertEqualInt(0600, st.st_mode & 0700);
+ #else
+@@ -61,7 +61,7 @@
+ 	assertEqualInt(r, 0);
+ 	if (r == 0) {
+ 		assert(S_ISREG(st2.st_mode));
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 		/* Group members bits and others bits do not work. */
+ 		assertEqualInt(0600, st2.st_mode & 0700);
+ #else
+@@ -81,7 +81,7 @@
+ 	r = lstat("symlink", &st);
+ 	failure("Failed to stat file %s/symlink, errno=%d", target, errno);
+ 	assertEqualInt(r, 0);
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	if (r == 0) {
+ 		failure("symlink should be a symlink; actual mode is %o",
+ 		    st.st_mode);
+@@ -102,7 +102,7 @@
+ 	if (r == 0) {
+ 		assert(S_ISREG(st.st_mode));
+ 		failure("%s/file2: st.st_mode = %o", target, st.st_mode);
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 		/* Execution bit and group members bits and others
+ 		 * bits do not work. */
+ 		assertEqualInt(0600, st.st_mode & 0700);
+@@ -120,7 +120,7 @@
+ 		assertEqualInt(r, 0);
+ 		assert(S_ISDIR(st.st_mode));
+ 		failure("%s/dir: st.st_mode = %o", target, st.st_mode);
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 		assertEqualInt(0700, st.st_mode & 0700);
+ #else
+ 		assertEqualInt(0775, st.st_mode & 0777);
+@@ -243,7 +243,7 @@
+ 	basic_cpio("copy_odc", "--format=odc", "", "2 blocks\n");
+ 	basic_cpio("copy_newc", "-H newc", "", "2 blocks\n");
+ 	basic_cpio("copy_cpio", "-H odc", "", "2 blocks\n");
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/*
+ 	 * On Windows, symbolic link does not work.
+ 	 * Currentry copying file instead. therefore block size is
+diff -urN old/libarchive/cpio/test/test_format_newc.c new/libarchive/cpio/test/test_format_newc.c
+--- old/libarchive/cpio/test/test_format_newc.c	2009-03-15 11:43:53.000000000 -0400
++++ new/libarchive/cpio/test/test_format_newc.c	2009-03-15 23:51:43.805600000 -0400
+@@ -128,7 +128,7 @@
+ 	assert(is_hex(e, 110)); /* Entire header is octal digits. */
+ 	assertEqualMem(e + 0, "070701", 6); /* Magic */
+ 	ino = from_hex(e + 6, 8); /* ino */
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* Group members bits and others bits do not work. */ 
+ 	assertEqualInt(0x8180, from_hex(e + 14, 8) & 0xffc0); /* Mode */
+ #else
+@@ -165,7 +165,7 @@
+ 	assert(is_hex(e, 110));
+ 	assertEqualMem(e + 0, "070701", 6); /* Magic */
+ 	assert(is_hex(e + 6, 8)); /* ino */
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	/* On Windows, symbolic link and group members bits and 
+ 	 * others bits do not work. */ 
+ 	assertEqualInt(0xa1ff, from_hex(e + 14, 8)); /* Mode */
+@@ -176,7 +176,7 @@
+ 	t2 = from_hex(e + 46, 8); /* mtime */
+ 	failure("First entry created at t=0x%08x this entry created at t2=0x%08x", t, t2);
+ 	assert(t2 == t || t2 == t + 1); /* Almost same as first entry. */
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* Symbolic link does not work. */
+ 	assertEqualMem(e + 54, "0000000a", 8); /* File size */
+ #else
+@@ -193,7 +193,7 @@
+ 	ns += 3 & (-ns - 2);
+ 	assertEqualInt(0, from_hex(e + 102, 8)); /* check field */
+ 	assertEqualMem(e + 110, "symlink\0\0\0", 10); /* Name contents */
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	assertEqualMem(e + 110 + ns, "file1\0\0\0", 8); /* symlink target */
+ #endif
+ 	e += 110 + fs + ns;
+@@ -202,7 +202,7 @@
+ 	assert(is_hex(e, 110));
+ 	assertEqualMem(e + 0, "070701", 6); /* Magic */
+ 	assert(is_hex(e + 6, 8)); /* ino */
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* Group members bits and others bits do not work. */ 
+ 	assertEqualInt(0x41c0, from_hex(e + 14, 8) & 0xffc0); /* Mode */
+ #else
+@@ -210,7 +210,9 @@
+ #endif
+ 	assertEqualInt(from_hex(e + 22, 8), getuid()); /* uid */
+ 	assertEqualInt(gid, from_hex(e + 30, 8)); /* gid */
++#ifndef NLINKS_INACCURATE_FOR_DIRS
+ 	assertEqualMem(e + 38, "00000002", 8); /* nlink */
++#endif
+ 	t2 = from_hex(e + 46, 8); /* mtime */
+ 	failure("First entry created at t=0x%08x this entry created at t2=0x%08x", t, t2);
+ 	assert(t2 == t || t2 == t + 1); /* Almost same as first entry. */
+@@ -235,7 +237,7 @@
+ 	assertEqualMem(e + 0, "070701", 6); /* Magic */
+ 	failure("If these aren't the same, then the hardlink detection failed to match them.");
+ 	assertEqualInt(ino, from_hex(e + 6, 8)); /* ino */
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* Group members bits and others bits do not work. */ 
+ 	assertEqualInt(0x8180, from_hex(e + 14, 8) & 0xffc0); /* Mode */
+ #else
+diff -urN old/libarchive/cpio/test/test_gcpio_compat.c new/libarchive/cpio/test/test_gcpio_compat.c
+--- old/libarchive/cpio/test/test_gcpio_compat.c	2009-03-15 11:43:53.000000000 -0400
++++ new/libarchive/cpio/test/test_gcpio_compat.c	2009-03-15 23:51:43.805600000 -0400
+@@ -29,7 +29,7 @@
+ unpack_test(const char *from, const char *options, const char *se)
+ {
+ 	struct stat st, st2;
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	char buff[128];
+ #endif
+ 	int r;
+@@ -62,7 +62,7 @@
+ 	assertEqualInt(r, 0);
+ 	if (r == 0) {
+ 		assert(S_ISREG(st.st_mode));
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 		assertEqualInt(0600, st.st_mode & 0700);
+ #else
+ 		assertEqualInt(0644, st.st_mode & 0777);
+@@ -79,7 +79,7 @@
+ 	assertEqualInt(r, 0);
+ 	if (r == 0) {
+ 		assert(S_ISREG(st2.st_mode));
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 		assertEqualInt(0600, st2.st_mode & 0700);
+ #else
+ 		assertEqualInt(0644, st2.st_mode & 0777);
+@@ -98,7 +98,7 @@
+ 	r = lstat("symlink", &st);
+ 	failure("Failed to stat file %s/symlink, errno=%d", from, errno);
+ 	assertEqualInt(r, 0);
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	if (r == 0) {
+ 		failure("symlink should be a symlink; actual mode is %o",
+ 		    st.st_mode);
+@@ -117,7 +117,7 @@
+ 	if (r == 0) {
+ 		assertEqualInt(r, 0);
+ 		assert(S_ISDIR(st.st_mode));
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 		assertEqualInt(0700, st.st_mode & 0700);
+ #else
+ 		assertEqualInt(0775, st.st_mode & 0777);
+diff -urN old/libarchive/cpio/test/test_option_L.c new/libarchive/cpio/test/test_option_L.c
+--- old/libarchive/cpio/test/test_option_L.c	2009-03-15 11:43:53.000000000 -0400
++++ new/libarchive/cpio/test/test_option_L.c	2009-03-15 23:51:43.805600000 -0400
+@@ -25,7 +25,7 @@
+ #include "test.h"
+ __FBSDID("$FreeBSD: src/usr.bin/cpio/test/test_option_L.c,v 1.2 2008/08/24 06:21:00 kientzle Exp $");
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #define CAT "type"
+ #else
+ #define CAT "cat"
+@@ -55,7 +55,7 @@
+ 	r = systemf(CAT " filelist | %s -pd copy >copy.out 2>copy.err", testprog);
+ 	assertEqualInt(r, 0);
+ 	assertEqualInt(0, lstat("copy/symlink", &st));
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	failure("Regular -p without -L should preserve symlinks.");
+ 	assert(S_ISLNK(st.st_mode));
+ #endif
+@@ -73,7 +73,7 @@
+ 	assertEqualInt(r, 0);
+ 
+ 	assertEqualInt(0, mkdir("unpack", 0755));
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	assertEqualInt(0, chdir("unpack"));
+ 	r = systemf("type ..\\archive.out | %s -i >unpack.out 2>unpack.err", testprog);
+ 	assertEqualInt(0, chdir(".."));
+@@ -83,7 +83,7 @@
+ 	failure("Error invoking %s -i", testprog);
+ 	assertEqualInt(r, 0);
+ 	assertEqualInt(0, lstat("unpack/symlink", &st));
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	assert(S_ISLNK(st.st_mode));
+ #endif
+ 
+@@ -92,7 +92,7 @@
+ 	assertEqualInt(r, 0);
+ 
+ 	assertEqualInt(0, mkdir("unpack-L", 0755));
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	assertEqualInt(0, chdir("unpack-L"));
+ 	r = systemf("type ..\\archive-L.out | %s -i >unpack-L.out 2>unpack-L.err", testprog);
+ 	assertEqualInt(0, chdir(".."));
+diff -urN old/libarchive/cpio/test/test_option_a.c new/libarchive/cpio/test/test_option_a.c
+--- old/libarchive/cpio/test/test_option_a.c	2009-03-15 11:43:52.000000000 -0400
++++ new/libarchive/cpio/test/test_option_a.c	2009-03-15 23:51:43.805600000 -0400
+@@ -23,7 +23,7 @@
+  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+ #include "test.h"
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #include <sys/utime.h>
+ #else
+ #include <utime.h>
+diff -urN old/libarchive/cpio/test/test_option_c.c new/libarchive/cpio/test/test_option_c.c
+--- old/libarchive/cpio/test/test_option_c.c	2009-03-15 11:43:52.000000000 -0400
++++ new/libarchive/cpio/test/test_option_c.c	2009-03-15 23:51:43.821200000 -0400
+@@ -114,7 +114,7 @@
+ 	dev = from_octal(e + 6, 6);
+ 	assert(is_octal(e + 12, 6)); /* ino */
+ 	ino = from_octal(e + 12, 6);
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* Group members bits and others bits do not work. */ 
+ 	assertEqualMem(e + 18, "100666", 6); /* Mode */
+ #else
+@@ -141,7 +141,7 @@
+ 	assertEqualMem(e + 0, "070707", 6); /* Magic */
+ 	assertEqualInt(dev, from_octal(e + 6, 6)); /* dev */
+ 	assert(dev != from_octal(e + 12, 6)); /* ino */
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	/* On Windows, symbolic link and group members bits and 
+ 	 * others bits do not work. */ 
+ 	assertEqualMem(e + 18, "120777", 6); /* Mode */
+@@ -156,14 +156,14 @@
+ 	assert(t <= now); /* File wasn't created in future. */
+ 	assert(t >= now - 2); /* File was created w/in last 2 secs. */
+ 	assertEqualMem(e + 59, "000010", 6); /* Name size */
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* On Windows, symbolic link does not work. */
+ 	assertEqualMem(e + 65, "00000000012", 11); /* File size */
+ #else
+ 	assertEqualMem(e + 65, "00000000004", 11); /* File size */
+ #endif
+ 	assertEqualMem(e + 76, "symlink\0", 8); /* Name contents */
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* On Windows, symbolic link does not work. */
+ 	assertEqualMem(e + 84, "123456789\0", 10); /* File contents. */
+ 	e += 94;
+@@ -181,7 +181,7 @@
+ 	/* Ino must be different from first entry. */
+ 	assert(is_octal(e + 12, 6)); /* ino */
+ 	assert(dev != from_octal(e + 12, 6));
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* Group members bits and others bits do not work. */ 
+ 	assertEqualMem(e + 18, "040777", 6); /* Mode */
+ #else
+@@ -191,7 +191,9 @@
+ 	/* Gid should be same as first entry. */
+ 	assert(is_octal(e + 30, 6)); /* gid */
+ 	assertEqualInt(gid, from_octal(e + 30, 6));
++#ifndef NLINKS_INACCURATE_FOR_DIRS
+ 	assertEqualMem(e + 36, "000002", 6); /* Nlink */
++#endif
+ 	t = from_octal(e + 48, 11); /* mtime */
+ 	assert(t <= now); /* File wasn't created in future. */
+ 	assert(t >= now - 2); /* File was created w/in last 2 secs. */
+diff -urN old/libarchive/cpio/test/test_option_f.c new/libarchive/cpio/test/test_option_f.c
+--- old/libarchive/cpio/test/test_option_f.c	2009-03-15 11:43:52.000000000 -0400
++++ new/libarchive/cpio/test/test_option_f.c	2009-03-15 23:51:43.821200000 -0400
+@@ -51,7 +51,7 @@
+ 	assertEqualInt(0, access("t0/b234", F_OK));
+ 
+ 	/* Don't extract 'a*' files. */
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* Single quotes isn't used by command.exe. */
+ 	unpack("t1", "-f a*");
+ #else
+@@ -63,7 +63,7 @@
+ 	assertEqualInt(0, access("t1/b234", F_OK));
+ 
+ 	/* Don't extract 'b*' files. */
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* Single quotes isn't used by command.exe. */
+ 	unpack("t2", "-f b*");
+ #else
+diff -urN old/libarchive/cpio/test/test_option_u.c new/libarchive/cpio/test/test_option_u.c
+--- old/libarchive/cpio/test/test_option_u.c	2009-03-15 11:43:52.000000000 -0400
++++ new/libarchive/cpio/test/test_option_u.c	2009-03-15 23:51:43.821200000 -0400
+@@ -23,7 +23,7 @@
+  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+ #include "test.h"
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #include <sys/utime.h>
+ #else
+ #include <utime.h>
+diff -urN old/libarchive/cpio/test/test_option_version.c new/libarchive/cpio/test/test_option_version.c
+--- old/libarchive/cpio/test/test_option_version.c	2009-03-15 11:43:52.000000000 -0400
++++ new/libarchive/cpio/test/test_option_version.c	2009-03-15 23:51:43.821200000 -0400
+@@ -77,7 +77,7 @@
+ 	/* All terminated by a newline. */
+ 	assert(s >= 1);
+ 	failure("Version: %s", p);
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	assertEqualMem(q, "\r\n", 2);
+ #else
+ 	assertEqualMem(q, "\n", 1);
+diff -urN old/libarchive/cpio/test/test_owner_parse.c new/libarchive/cpio/test/test_owner_parse.c
+--- old/libarchive/cpio/test/test_owner_parse.c	2009-03-15 11:43:53.000000000 -0400
++++ new/libarchive/cpio/test/test_owner_parse.c	2009-03-15 23:51:43.836800000 -0400
+@@ -27,24 +27,60 @@
+ 
+ #include "../cpio.h"
+ 
++#if defined(__CYGWIN__)
++/* On cygwin, the Administrator user most likely exists (unless
++ * it has been renamed), but its group membership depends on
++ * how the user set up their /etc/passwd. Likely values are
++ * 513 (None), 545 (Users), or 544 (Administrators). Just check
++ * for one of those...
++ */
++#define ROOT "Administrator"
++#define ROOT_UID 500
++#define ROOT_GID1 513
++#define ROOT_GID2 545
++#define ROOT_GID3 544
++#else
++#define ROOT "root"
++#define ROOT_UID 0
++#define ROOT_GID 0
++#endif
++
+ DEFINE_TEST(test_owner_parse)
+ {
+ 	int uid, gid;
+ 
+ 	cpio_progname = "Ignore this message";
+ 
+-	assertEqualInt(0, owner_parse("root", &uid, &gid));
+-	assertEqualInt(0, uid);
++	assertEqualInt(0, owner_parse(ROOT, &uid, &gid));
++	assertEqualInt(ROOT_UID, uid);
+ 	assertEqualInt(-1, gid);
+ 
+ 
+-	assertEqualInt(0, owner_parse("root:", &uid, &gid));
+-	assertEqualInt(0, uid);
+-	assertEqualInt(0, gid);
+-
+-	assertEqualInt(0, owner_parse("root.", &uid, &gid));
+-	assertEqualInt(0, uid);
+-	assertEqualInt(0, gid);
++	assertEqualInt(0, owner_parse(ROOT ":", &uid, &gid));
++	assertEqualInt(ROOT_UID, uid);
++#if defined(__CYGWIN__)
++	{
++		int gidIsOneOf = (ROOT_GID1 == gid)
++			|| (ROOT_GID2 == gid)
++			|| (ROOT_GID3 == gid);
++		assertEqualInt(1, gidIsOneOf);
++	}
++#else
++	assertEqualInt(ROOT_GID, gid);
++#endif
++
++	assertEqualInt(0, owner_parse(ROOT ".", &uid, &gid));
++	assertEqualInt(ROOT_UID, uid);
++#if defined(__CYGWIN__)
++	{
++		int gidIsOneOf = (ROOT_GID1 == gid)
++			|| (ROOT_GID2 == gid)
++			|| (ROOT_GID3 == gid);
++		assertEqualInt(1, gidIsOneOf);
++	}
++#else
++	assertEqualInt(ROOT_GID, gid);
++#endif
+ 
+ 	/*
+ 	 * TODO: Lookup current user/group name, build strings and
+@@ -62,7 +98,7 @@
+ 	 */
+ 
+ 	assertEqualInt(1, owner_parse(":nonexistentgroup", &uid, &gid));
+-	assertEqualInt(1, owner_parse("root:nonexistentgroup", &uid, &gid));
++	assertEqualInt(1, owner_parse(ROOT ":nonexistentgroup", &uid, &gid));
+ 	assertEqualInt(1,
+ 	    owner_parse("nonexistentuser:nonexistentgroup", &uid, &gid));
+ }
+diff -urN old/libarchive/cpio/test/test_passthrough_dotdot.c new/libarchive/cpio/test/test_passthrough_dotdot.c
+--- old/libarchive/cpio/test/test_passthrough_dotdot.c	2009-03-15 11:43:52.000000000 -0400
++++ new/libarchive/cpio/test/test_passthrough_dotdot.c	2009-03-15 23:51:43.836800000 -0400
+@@ -80,7 +80,7 @@
+ 	assertEqualInt(r, 0);
+ 	if (r == 0) {
+ 		assert(S_ISREG(st.st_mode));
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 		assertEqualInt(0600, st.st_mode & 0700);
+ #else
+ 		assertEqualInt(0642, st.st_mode & 0777);
+diff -urN old/libarchive/cpio/test/test_passthrough_reverse.c new/libarchive/cpio/test/test_passthrough_reverse.c
+--- old/libarchive/cpio/test/test_passthrough_reverse.c	2009-03-15 11:43:52.000000000 -0400
++++ new/libarchive/cpio/test/test_passthrough_reverse.c	2009-03-15 23:51:43.836800000 -0400
+@@ -85,7 +85,7 @@
+ 		assertEqualInt(r, 0);
+ 		assert(S_ISDIR(st.st_mode));
+ 		failure("st.st_mode=0%o",  st.st_mode);
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 		assertEqualInt(0700, st.st_mode & 0700);
+ #else
+ 		assertEqualInt(0743, st.st_mode & 0777);
+@@ -99,7 +99,7 @@
+ 	assertEqualInt(r, 0);
+ 	if (r == 0) {
+ 		assert(S_ISREG(st.st_mode));
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 		assertEqualInt(0600, st.st_mode & 0700);
+ #else
+ 		assertEqualInt(0644, st.st_mode & 0777);
+diff -urN old/libarchive/libarchive/archive.h new/libarchive/libarchive/archive.h
+--- old/libarchive/libarchive/archive.h	2009-03-15 11:43:49.000000000 -0400
++++ new/libarchive/libarchive/archive.h	2009-03-15 23:51:43.836800000 -0400
+@@ -46,7 +46,7 @@
+ 
+ /* Get appropriate definitions of standard POSIX-style types. */
+ /* These should match the types used in 'struct stat' */
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #define	__LA_INT64_T	__int64
+ # if	defined(_WIN64)
+ #  define	__LA_SSIZE_T	__int64
+@@ -68,7 +68,7 @@
+  * .lib.  The default here assumes you're building a DLL.  Only
+  * libarchive source should ever define __LIBARCHIVE_BUILD.
+  */
+-#if ((defined __WIN32__) || (defined _WIN32)) && (!defined LIBARCHIVE_STATIC)
++#if ((defined __WIN32__) || (defined _WIN32) || defined(__CYGWIN__)) && (!defined LIBARCHIVE_STATIC)
+ # ifdef __LIBARCHIVE_BUILD
+ #  ifdef __GNUC__
+ #   define __LA_DECL	__attribute__((dllexport)) extern
+diff -urN old/libarchive/libarchive/archive_check_magic.c new/libarchive/libarchive/archive_check_magic.c
+--- old/libarchive/libarchive/archive_check_magic.c	2009-03-15 11:43:49.000000000 -0400
++++ new/libarchive/libarchive/archive_check_magic.c	2009-03-15 23:51:43.852400000 -0400
+@@ -40,7 +40,7 @@
+ #ifdef HAVE_UNISTD_H
+ #include <unistd.h>
+ #endif
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #include <windows.h>
+ #include <winbase.h>
+ #endif
+@@ -56,7 +56,7 @@
+ static void
+ diediedie(void)
+ {
+-#if defined(_WIN32) && defined(_DEBUG)
++#if defined(_WIN32) && !defined(__CYGWIN__) && defined(_DEBUG)
+ 	/* Cause a breakpoint exception  */
+ 	DebugBreak();
+ #endif
+diff -urN old/libarchive/libarchive/archive_entry.c new/libarchive/libarchive/archive_entry.c
+--- old/libarchive/libarchive/archive_entry.c	2009-03-15 11:43:50.000000000 -0400
++++ new/libarchive/libarchive/archive_entry.c	2009-03-15 23:51:43.852400000 -0400
+@@ -83,7 +83,7 @@
+ #elif defined makedev
+ /* There's a "makedev" macro. */
+ #define ae_makedev(maj, min) makedev((maj), (min))
+-#elif defined mkdev || defined _WIN32 || defined __WIN32__
++#elif defined mkdev || ((defined _WIN32 || defined __WIN32__) && !defined(__CYGWIN__))
+ /* Windows. <sigh> */
+ #define ae_makedev(maj, min) mkdev((maj), (min))
+ #else
+diff -urN old/libarchive/libarchive/archive_entry.h new/libarchive/libarchive/archive_entry.h
+--- old/libarchive/libarchive/archive_entry.h	2009-03-15 11:43:51.000000000 -0400
++++ new/libarchive/libarchive/archive_entry.h	2009-03-15 23:51:43.852400000 -0400
+@@ -42,7 +42,7 @@
+ 
+ /* Get appropriate definitions of standard POSIX-style types. */
+ /* These should match the types used in 'struct stat' */
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #define	__LA_INT64_T	__int64
+ #define	__LA_UID_T	unsigned int
+ #define	__LA_GID_T	unsigned int
+@@ -71,7 +71,7 @@
+  * .lib.  The default here assumes you're building a DLL.  Only
+  * libarchive source should ever define __LIBARCHIVE_BUILD.
+  */
+-#if ((defined __WIN32__) || (defined _WIN32)) && (!defined LIBARCHIVE_STATIC)
++#if ((defined __WIN32__) || (defined _WIN32) || defined(__CYGWIN__)) && (!defined LIBARCHIVE_STATIC)
+ # ifdef __LIBARCHIVE_BUILD
+ #  ifdef __GNUC__
+ #   define __LA_DECL	__attribute__((dllexport)) extern
+diff -urN old/libarchive/libarchive/archive_read_disk_set_standard_lookup.c new/libarchive/libarchive/archive_read_disk_set_standard_lookup.c
+--- old/libarchive/libarchive/archive_read_disk_set_standard_lookup.c	2009-03-15 11:43:51.000000000 -0400
++++ new/libarchive/libarchive/archive_read_disk_set_standard_lookup.c	2009-03-15 23:51:43.852400000 -0400
+@@ -47,14 +47,14 @@
+ 
+ #include "archive.h"
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ int
+ archive_read_disk_set_standard_lookup(struct archive *a)
+ {
+ 	archive_set_error(a, -1, "Standard lookups not available on Windows");
+ 	return (ARCHIVE_FATAL);
+ }
+-#else
++#else /* ! (_WIN32 && !__CYGWIN__) */
+ #define	name_cache_size 127
+ 
+ static const char * const NO_NAME = "(noname)";
+@@ -226,4 +226,4 @@
+ 
+ 	return strdup(grent.gr_name);
+ }
+-#endif /* _WIN32 */
++#endif /* ! (_WIN32 && !__CYGWIN__) */
+diff -urN old/libarchive/libarchive/archive_read_support_compression_program.c new/libarchive/libarchive/archive_read_support_compression_program.c
+--- old/libarchive/libarchive/archive_read_support_compression_program.c	2009-03-15 11:43:51.000000000 -0400
++++ new/libarchive/libarchive/archive_read_support_compression_program.c	2009-03-15 23:51:43.868000000 -0400
+@@ -61,7 +61,7 @@
+ 
+ /* This capability is only available on POSIX systems. */
+ #if (!defined(HAVE_PIPE) || !defined(HAVE_FCNTL) || \
+-    !(defined(HAVE_FORK) || defined(HAVE_VFORK))) && !defined(_WIN32)
++    !(defined(HAVE_FORK) || defined(HAVE_VFORK))) && (!defined(_WIN32) || defined(__CYGWIN__))
+ 
+ /*
+  * On non-Posix systems, allow the program to build, but choke if
+diff -urN old/libarchive/libarchive/archive_string.c new/libarchive/libarchive/archive_string.c
+--- old/libarchive/libarchive/archive_string.c	2009-03-15 11:43:49.000000000 -0400
++++ new/libarchive/libarchive/archive_string.c	2009-03-15 23:51:43.868000000 -0400
+@@ -40,7 +40,7 @@
+ #ifdef HAVE_WCHAR_H
+ #include <wchar.h>
+ #endif
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #include <windows.h>
+ #endif
+ 
+@@ -165,7 +165,7 @@
+ 	return (__archive_string_append(as, &c, 1));
+ }
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ /*
+  * Home-grown wctomb for UTF-8.
+  */
+@@ -184,6 +184,7 @@
+ 		p[1] = 0x80 | (wc & 0x3f);
+ 		return (2);
+ 	}
++#if SIZEOF_WCHAR_T > 2
+ 	if (wc <= 0xffff) {
+ 		p[0] = 0xe0 | ((wc >> 12) & 0x0f);
+ 		p[1] = 0x80 | ((wc >> 6) & 0x3f);
+@@ -203,6 +204,15 @@
+ 	 * can actually fail.
+ 	 */
+ 	return (-1);
++#else
++	/* is this the right thing to do when wchar_t is
++	 * limited to 16 bits?
++	 */
++	p[0] = 0xe0 | ((wc >> 12) & 0x0f);
++	p[1] = 0x80 | ((wc >> 6) & 0x3f);
++	p[2] = 0x80 | (wc & 0x3f);
++	return (3);
++#endif
+ }
+ 
+ static int
+@@ -445,4 +455,4 @@
+ 	return (ws);
+ }
+ 
+-#endif /* !_WIN32 */
++#endif /* !_WIN32 || __CYGWIN__ */
+diff -urN old/libarchive/libarchive/archive_windows.c new/libarchive/libarchive/archive_windows.c
+--- old/libarchive/libarchive/archive_windows.c	2009-03-15 11:43:49.000000000 -0400
++++ new/libarchive/libarchive/archive_windows.c	2009-03-15 23:51:43.868000000 -0400
+@@ -44,8 +44,9 @@
+  * considering alternative APIs.
+  */
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #define _WIN32_WINNT	0x500	/* needs to use CreateHardLink() API */
++#define WINVER		0x500
+ 
+ #include <errno.h>
+ #include <stddef.h>
+@@ -1169,4 +1170,4 @@
+ 
+ #endif /* !HAVE_OPENSSL_MD5_H && !HAVE_OPENSSL_SHA_H */
+ 
+-#endif /* _WIN32 */
++#endif /* _WIN32 && !__CYGWIN__ */
+diff -urN old/libarchive/libarchive/archive_write_disk.c new/libarchive/libarchive/archive_write_disk.c
+--- old/libarchive/libarchive/archive_write_disk.c	2009-03-15 11:43:49.000000000 -0400
++++ new/libarchive/libarchive/archive_write_disk.c	2009-03-15 23:51:43.883600000 -0400
+@@ -414,7 +414,7 @@
+ 		a->mode &= ~S_ISVTX;
+ 		a->mode &= ~a->user_umask;
+ 	}
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	if (a->flags & ARCHIVE_EXTRACT_OWNER)
+ 		a->todo |= TODO_OWNER;
+ #endif
+@@ -1217,7 +1217,7 @@
+ 		if (p->fixup & TODO_TIMES) {
+ #ifdef HAVE_UTIMES
+ 			/* {f,l,}utimes() are preferred, when available. */
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 			struct __timeval times[2];
+ #else
+ 			struct timeval times[2];
+@@ -1474,7 +1474,7 @@
+ 	return (ARCHIVE_OK);
+ }
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) || defined(__CYGWIN__)
+ /*
+  * 1. Convert a path separator from '\' to '/' .
+  *    We shouldn't check multi-byte character directly because some
+@@ -1544,7 +1544,7 @@
+ 		return (ARCHIVE_FAILED);
+ 	}
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) || defined(__CYGWIN__)
+ 	cleanup_pathname_win(a);
+ #endif
+ 	/* Skip leading '/'. */
+@@ -1758,12 +1758,17 @@
+ static int
+ set_ownership(struct archive_write_disk *a)
+ {
++#ifndef __CYGWIN__
++/* unfortunately, on win32 there is no 'root' user with uid 0,
++   so we just have to try the chown and see if it works */
++
+ 	/* If we know we can't change it, don't bother trying. */
+ 	if (a->user_uid != 0  &&  a->user_uid != a->uid) {
+ 		archive_set_error(&a->archive, errno,
+ 		    "Can't set UID=%d", a->uid);
+ 		return (ARCHIVE_WARN);
+ 	}
++#endif
+ 
+ #ifdef HAVE_FCHOWN
+ 	/* If we have an fd, we can avoid a race. */
+@@ -1807,7 +1812,7 @@
+     time_t atime, long atime_nsec,
+     time_t mtime, long mtime_nsec)
+ {
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	struct __timeval times[2];
+ #else
+ 	struct timeval times[2];
+@@ -1944,7 +1949,7 @@
+ 			return (r);
+ 		if (a->pst->st_gid != a->gid) {
+ 			mode &= ~ S_ISGID;
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 			if (a->flags & ARCHIVE_EXTRACT_OWNER) {
+ 				/*
+ 				 * This is only an error if you
+@@ -1963,7 +1968,7 @@
+ 		if (a->pst->st_uid != a->uid
+ 		    && (a->todo & TODO_SUID)) {
+ 			mode &= ~ S_ISUID;
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 			if (a->flags & ARCHIVE_EXTRACT_OWNER) {
+ 				archive_set_error(&a->archive, -1,
+ 				    "Can't restore SUID bit");
+@@ -1981,7 +1986,7 @@
+ 		 */
+ 		if (a->user_uid != a->uid) {
+ 			mode &= ~ S_ISUID;
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 			if (a->flags & ARCHIVE_EXTRACT_OWNER) {
+ 				archive_set_error(&a->archive, -1,
+ 				    "Can't make file SUID");
+diff -urN old/libarchive/libarchive/archive_write_disk_set_standard_lookup.c new/libarchive/libarchive/archive_write_disk_set_standard_lookup.c
+--- old/libarchive/libarchive/archive_write_disk_set_standard_lookup.c	2009-03-15 11:43:49.000000000 -0400
++++ new/libarchive/libarchive/archive_write_disk_set_standard_lookup.c	2009-03-15 23:51:43.883600000 -0400
+@@ -122,7 +122,7 @@
+ 		if (grent != NULL)
+ 			gid = grent->gr_gid;
+ 	}
+-#elif _WIN32
++#elif defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* TODO: do a gname->gid lookup for Windows. */
+ #endif
+ 	b->id = gid;
+@@ -159,7 +159,7 @@
+ 		if (pwent != NULL)
+ 			uid = pwent->pw_uid;
+ 	}
+-#elif _WIN32
++#elif defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* TODO: do a uname->uid lookup for Windows. */
+ #endif
+ 	b->id = uid;
+diff -urN old/libarchive/libarchive/archive_write_set_compression_program.c new/libarchive/libarchive/archive_write_set_compression_program.c
+--- old/libarchive/libarchive/archive_write_set_compression_program.c	2009-03-15 11:43:49.000000000 -0400
++++ new/libarchive/libarchive/archive_write_set_compression_program.c	2009-03-15 23:51:43.883600000 -0400
+@@ -29,7 +29,7 @@
+ 
+ /* This capability is only available on POSIX systems. */
+ #if (!defined(HAVE_PIPE) || !defined(HAVE_FCNTL) || \
+-    !(defined(HAVE_FORK) || defined(HAVE_VFORK))) && !defined(_WIN32)
++    !(defined(HAVE_FORK) || defined(HAVE_VFORK))) && (!defined(_WIN32) || defined(__CYGWIN__))
+ #include "archive.h"
+ 
+ /*
+diff -urN old/libarchive/libarchive/archive_write_set_format_mtree.c new/libarchive/libarchive/archive_write_set_format_mtree.c
+--- old/libarchive/libarchive/archive_write_set_format_mtree.c	2009-03-15 11:43:51.000000000 -0400
++++ new/libarchive/libarchive/archive_write_set_format_mtree.c	2009-03-15 23:51:43.883600000 -0400
+@@ -320,7 +320,7 @@
+ 	archive_string_empty(&mtree->ebuf);
+ }
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ static size_t
+ dir_len(struct archive_entry *entry)
+ {
+@@ -334,7 +334,7 @@
+ 	return (r - path + 1);
+ }
+ 
+-#else
++#else /* _WIN32 && !__CYGWIN__ */
+ /*
+  * Note: We should use wide-character for findng '\' character,
+  * a directory separator on Windows, because some character-set have
+@@ -376,7 +376,7 @@
+ 		return (0);
+ 	return (al + 1);
+ }
+-#endif /* _WIN32 */
++#endif /* _WIN32 && !__CYGWIN__ */
+ 
+ static int
+ parent_dir_changed(struct archive_string *dir, struct archive_entry *entry)
+diff -urN old/libarchive/libarchive/config_windows.h new/libarchive/libarchive/config_windows.h
+--- old/libarchive/libarchive/config_windows.h	2009-03-15 11:43:49.000000000 -0400
++++ new/libarchive/libarchive/config_windows.h	2009-03-15 23:51:43.899200000 -0400
+@@ -6,7 +6,7 @@
+ ///////////////////////////////////////////////////////////////////////////
+ //  Check for Watcom and Microsoft Visual C compilers (WIN32 only)  ///////
+ ///////////////////////////////////////////////////////////////////////////
+-#if defined(__WIN32__) || defined(_WIN32) || defined(__WIN32)
++#if (defined(__WIN32__) || defined(_WIN32) || defined(__WIN32)) && !defined(__CYGWIN__)
+   #define	IS_WIN32  1
+ 
+   #if defined(__TURBOC__) || defined(__BORLANDC__) /* Borland compilers */
+diff -urN old/libarchive/libarchive/filter_fork_windows.c new/libarchive/libarchive/filter_fork_windows.c
+--- old/libarchive/libarchive/filter_fork_windows.c	2009-03-15 11:43:49.000000000 -0400
++++ new/libarchive/libarchive/filter_fork_windows.c	2009-03-15 23:51:43.899200000 -0400
+@@ -25,7 +25,7 @@
+ 
+ #include "archive_platform.h"
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 
+ #include "filter_fork.h"
+ 
+@@ -108,4 +108,4 @@
+ 	Sleep(100);
+ }
+ 
+-#endif /* _WIN32 */
++#endif /* _WIN32 && !__CYGWIN__ */
+diff -urN old/libarchive/libarchive/test/main.c new/libarchive/libarchive/test/main.c
+--- old/libarchive/libarchive/test/main.c	2009-03-15 11:43:47.000000000 -0400
++++ new/libarchive/libarchive/test/main.c	2009-03-15 23:51:43.899200000 -0400
+@@ -33,7 +33,7 @@
+ #include <locale.h>
+ #include <stdarg.h>
+ #include <time.h>
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #include <crtdbg.h>
+ #include <windows.h>
+ #include <winbase.h>
+@@ -93,7 +93,7 @@
+ static const char *refdir;
+ 
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 
+ static void
+ invalid_parameter_handler(const wchar_t * expression,
+@@ -798,7 +798,7 @@
+ 	/* If there were no failures, we can remove the work dir. */
+ 	if (failures == failures_before) {
+ 		if (!keep_temp_files && chdir(tmpdir) == 0) {
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 			systemf("rm -rf %s", tests[i].name);
+ #else
+ 			systemf("rmdir /S /Q %s", tests[i].name);
+@@ -894,7 +894,7 @@
+ 	fclose(in);
+ }
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #define DEV_NULL "NUL"
+ #else
+ #define DEV_NULL "/dev/null"
+@@ -966,7 +966,7 @@
+ 		strncat(tried, "\n", sizeof(tried) - strlen(tried) - 1);
+ 	}
+ 
+-#if defined(_WIN32) && defined(_DEBUG)
++#if defined(_WIN32) && !defined(__CYGWIN__) && defined(_DEBUG)
+ 	DebugBreak();
+ #endif
+ 	printf("Unable to locate known reference file %s\n", KNOWNREF);
+@@ -992,7 +992,7 @@
+ 
+ 	(void)argc; /* UNUSED */
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* To stop to run the default invalid parameter handler. */
+ 	_set_invalid_parameter_handler(invalid_parameter_handler);
+ 	/* for open() to a binary mode. */
+diff -urN old/libarchive/libarchive/test/test.h new/libarchive/libarchive/test/test.h
+--- old/libarchive/libarchive/test/test.h	2009-03-15 11:43:46.000000000 -0400
++++ new/libarchive/libarchive/test/test.h	2009-03-15 23:51:43.899200000 -0400
+@@ -37,7 +37,7 @@
+ #elif defined(__FreeBSD__)
+ /* Building as part of FreeBSD system requires a pre-built config.h. */
+ #include "config_freebsd.h"
+-#elif defined(_WIN32)
++#elif defined(_WIN32) && !defined(__CYGWIN__)
+ /* Win32 can't run the 'configure' script. */
+ #include "config_windows.h"
+ #else
+@@ -45,7 +45,7 @@
+ #error Oops: No config.h and no pre-built configuration in test.h.
+ #endif
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ #include <dirent.h>
+ #else
+ #include <direct.h>
+@@ -56,7 +56,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <sys/stat.h>
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ #include <unistd.h>
+ #endif
+ #include <wchar.h>
+@@ -66,13 +66,16 @@
+ #endif
+ 
+ /* No non-FreeBSD platform will have __FBSDID, so just define it here. */
++/* ...except for Cygwin, and anything based on newlib... */
+ #ifdef __FreeBSD__
+ #include <sys/cdefs.h>  /* For __FBSDID */
+ #else
++#ifndef __FBSDID
+ #define	__FBSDID(a)     /* null */
+ #endif
++#endif
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #define snprintf	sprintf_s
+ #define LOCALE_DE	"deu"
+ #else
+diff -urN old/libarchive/libarchive/test/test_read_disk.c new/libarchive/libarchive/test/test_read_disk.c
+--- old/libarchive/libarchive/test/test_read_disk.c	2009-03-15 11:43:46.000000000 -0400
++++ new/libarchive/libarchive/test/test_read_disk.c	2009-03-15 23:51:43.914800000 -0400
+@@ -111,6 +111,11 @@
+ 	if (archive_read_disk_set_standard_lookup(a) != ARCHIVE_OK) {
+ 		skipping("standard uname/gname lookup");
+ 	} else {
++#if defined(__CYGWIN__)
++		skipping("standard uname/gname lookup; typically no user with uid=0 on cygwin platform");
++		i = 0;
++		p = zero_groups[0]; /* avoid unused warnings */
++#else
+ 		/* XXX Someday, we may need to generalize this the
+ 		 * same way we generalized the group name check below.
+ 		 * That's needed only if we encounter a system where
+@@ -135,6 +140,7 @@
+ 			failure("group 0 didn't have any of the expected names");
+ 			assertEqualString(p, zero_groups[0]);
+ 		}
++#endif
+ 	}
+ 
+ 	/* Deregister again and verify the default lookups again. */
+diff -urN old/libarchive/libarchive/test/test_read_extract.c new/libarchive/libarchive/test/test_read_extract.c
+--- old/libarchive/libarchive/test/test_read_extract.c	2009-03-15 11:43:46.000000000 -0400
++++ new/libarchive/libarchive/test/test_read_extract.c	2009-03-15 23:51:43.914800000 -0400
+@@ -32,13 +32,13 @@
+ {
+ 	struct archive_entry *ae;
+ 	struct archive *a;
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	struct stat st;
+ #endif
+ 	size_t used;
+ 	int i;
+ 	char *buff, *file_buff;
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	int fd;
+ 	ssize_t bytes_read;
+ #endif
+@@ -138,7 +138,7 @@
+ 	assert(0 == archive_read_finish(a));
+ #endif
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	/* Test the entries on disk. */
+ 	/* This first entry was extracted with ARCHIVE_EXTRACT_PERM,
+ 	 * so the permissions should have been restored exactly,
+diff -urN old/libarchive/libarchive/test/test_write_disk.c new/libarchive/libarchive/test/test_write_disk.c
+--- old/libarchive/libarchive/test/test_write_disk.c	2009-03-15 11:43:45.000000000 -0400
++++ new/libarchive/libarchive/test/test_write_disk.c	2009-03-15 23:51:43.914800000 -0400
+@@ -52,7 +52,7 @@
+ 	 * that automatically. */
+ 	if (archive_entry_filetype(ae) == AE_IFDIR)
+ 		st.st_mode &= ~S_ISGID;
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	assertEqualInt(st.st_mode, archive_entry_mode(ae) & ~UMASK);
+ #endif
+ }
+@@ -99,7 +99,7 @@
+ 	assert(0 == stat(archive_entry_pathname(ae), &st));
+ 	failure("st.st_mode=%o archive_entry_mode(ae)=%o",
+ 	    st.st_mode, archive_entry_mode(ae));
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	assertEqualInt(st.st_mode, (archive_entry_mode(ae) & ~UMASK));
+ #endif
+ 	assertEqualInt(st.st_size, sizeof(data));
+@@ -146,7 +146,7 @@
+ 	assert(0 == stat(archive_entry_pathname(ae), &st));
+ 	failure("st.st_mode=%o archive_entry_mode(ae)=%o",
+ 	    st.st_mode, archive_entry_mode(ae));
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	assertEqualInt(st.st_mode, (archive_entry_mode(ae) & ~UMASK));
+ #endif
+ 	assertEqualInt(st.st_size, i);
+@@ -183,7 +183,7 @@
+ 	assert(0 == stat(archive_entry_pathname(ae), &st));
+ 	failure("st.st_mode=%o archive_entry_mode(ae)=%o",
+ 	    st.st_mode, archive_entry_mode(ae));
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	assertEqualInt(st.st_mode, (archive_entry_mode(ae) & ~UMASK));
+ #endif
+ 	assertEqualInt(st.st_size, 5);
+@@ -212,14 +212,14 @@
+ 	assert(0 == stat(archive_entry_pathname(ae), &st));
+ 	failure("st.st_mode=%o archive_entry_mode(ae)=%o",
+ 	    st.st_mode, archive_entry_mode(ae));
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	assertEqualInt(st.st_mode, (archive_entry_mode(ae) & ~UMASK));
+ #endif
+ 	failure(msg);
+ 	assertEqualInt(st.st_size, sizeof(data));
+ }
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ static void create_reg_file_win(struct archive_entry *ae, const char *msg)
+ {
+ 	static const char data[]="abcdefghijklmnopqrstuvwxyz";
+@@ -257,7 +257,7 @@
+ 	    st.st_mode, archive_entry_mode(ae));
+ 	assertEqualInt(st.st_size, sizeof(data));
+ }
+-#endif /* _WIN32 */
++#endif /* _WIN32 && !__CYGWIN__ */
+ #endif
+ 
+ DEFINE_TEST(test_write_disk)
+@@ -326,7 +326,7 @@
+ 	create(ae, "Test creating a file over an existing dir.");
+ 	archive_entry_free(ae);
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* A file with unusable characters in its file name. */
+ 	assert((ae = archive_entry_new()) != NULL);
+ 	archive_entry_copy_pathname(ae, "f:i*l?e\"f<i>l|e");
+@@ -342,6 +342,6 @@
+ 	create_reg_file_win(ae, "Test creating a regular file"
+ 	    " with unusable characters in its file name");
+ 	archive_entry_free(ae);
+-#endif /* _WIN32 */
++#endif /* _WIN32 && !__CYGWIN__ */
+ #endif
+ }
+diff -urN old/libarchive/libarchive/test/test_write_disk_failures.c new/libarchive/libarchive/test/test_write_disk_failures.c
+--- old/libarchive/libarchive/test/test_write_disk_failures.c	2009-03-15 11:43:47.000000000 -0400
++++ new/libarchive/libarchive/test/test_write_disk_failures.c	2009-03-15 23:51:43.914800000 -0400
+@@ -34,7 +34,7 @@
+ 
+ DEFINE_TEST(test_write_disk_failures)
+ {
+-#if ARCHIVE_VERSION_NUMBER < 1009000 || defined(_WIN32)
++#if ARCHIVE_VERSION_NUMBER < 1009000 || (defined(_WIN32) && !defined(__CYGWIN__))
+ 	skipping("archive_write_disk interface");
+ #else
+ 	struct archive_entry *ae;
+diff -urN old/libarchive/libarchive/test/test_write_disk_hardlink.c new/libarchive/libarchive/test/test_write_disk_hardlink.c
+--- old/libarchive/libarchive/test/test_write_disk_hardlink.c	2009-03-15 11:43:46.000000000 -0400
++++ new/libarchive/libarchive/test/test_write_disk_hardlink.c	2009-03-15 23:51:43.930400000 -0400
+@@ -36,7 +36,7 @@
+  */
+ DEFINE_TEST(test_write_disk_hardlink)
+ {
+-#if ARCHIVE_VERSION_NUMBER < 1009000 || defined(_WIN32)
++#if ARCHIVE_VERSION_NUMBER < 1009000 || (defined(_WIN32) && !defined(__CYGWIN__))
+ 	skipping("archive_write_disk_hardlink tests");
+ #else
+ 	static const char data[]="abcdefghijklmnopqrstuvwxyz";
+diff -urN old/libarchive/libarchive/test/test_write_disk_perms.c new/libarchive/libarchive/test/test_write_disk_perms.c
+--- old/libarchive/libarchive/test/test_write_disk_perms.c	2009-03-15 11:43:47.000000000 -0400
++++ new/libarchive/libarchive/test/test_write_disk_perms.c	2009-03-15 23:51:43.930400000 -0400
+@@ -25,7 +25,7 @@
+ #include "test.h"
+ __FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk_perms.c,v 1.11 2008/12/06 06:01:50 kientzle Exp $");
+ 
+-#if ARCHIVE_VERSION_NUMBER >= 1009000 && !defined(_WIN32)
++#if ARCHIVE_VERSION_NUMBER >= 1009000 && (!defined(_WIN32) || defined(__CYGWIN__))
+ 
+ #define UMASK 022
+ 
+@@ -125,7 +125,7 @@
+ 
+ DEFINE_TEST(test_write_disk_perms)
+ {
+-#if ARCHIVE_VERSION_NUMBER < 1009000 || defined(_WIN32)
++#if ARCHIVE_VERSION_NUMBER < 1009000 || (defined(_WIN32) && !defined(__CYGWIN__))
+ 	skipping("archive_write_disk interface");
+ #else
+ 	struct archive *a;
+diff -urN old/libarchive/libarchive/test/test_write_disk_secure.c new/libarchive/libarchive/test/test_write_disk_secure.c
+--- old/libarchive/libarchive/test/test_write_disk_secure.c	2009-03-15 11:43:46.000000000 -0400
++++ new/libarchive/libarchive/test/test_write_disk_secure.c	2009-03-15 23:51:43.930400000 -0400
+@@ -55,7 +55,7 @@
+ 	archive_entry_free(ae);
+ 	assert(0 == archive_write_finish_entry(a));
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	/* Write a symlink to the dir above. */
+ 	assert((ae = archive_entry_new()) != NULL);
+ 	archive_entry_copy_pathname(ae, "link_to_dir");
+@@ -187,7 +187,7 @@
+ 	assert(0 == archive_write_finish(a));
+ #endif
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	/* Test the entries on disk. */
+ 	assert(0 == lstat("dir", &st));
+ 	failure("dir: st.st_mode=%o", st.st_mode);
+diff -urN old/libarchive/tar/bsdtar.c new/libarchive/tar/bsdtar.c
+--- old/libarchive/tar/bsdtar.c	2009-03-15 11:43:30.000000000 -0400
++++ new/libarchive/tar/bsdtar.c	2009-03-15 23:51:43.930400000 -0400
+@@ -73,7 +73,7 @@
+ #ifdef __linux
+ #define	_PATH_DEFTAPE "/dev/st0"
+ #endif
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #define	_PATH_DEFTAPE "\\\\.\\tape0"
+ #endif
+ 
+@@ -113,8 +113,10 @@
+ 	memset(bsdtar, 0, sizeof(*bsdtar));
+ 	bsdtar->fd = -1; /* Mark as "unused" */
+ 	option_o = 0;
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* Make sure open() function will be used with a binary mode. */
++	/* on cygwin, we need something similar, but instead link against */
++	/* a special startup object, binmode.o */
+ 	_set_fmode(_O_BINARY);
+ #endif
+ 
+@@ -122,7 +124,7 @@
+ 	if (*argv == NULL)
+ 		bsdtar->progname = "bsdtar";
+ 	else {
+-#if _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 		bsdtar->progname = strrchr(*argv, '\\');
+ #else
+ 		bsdtar->progname = strrchr(*argv, '/');
+@@ -414,6 +416,9 @@
+ 			usage(bsdtar);
+ #endif
+ 			break;
++		case OPTION_SAME_OWNER: /* GNU tar */
++			bsdtar->extract_flags |= ARCHIVE_EXTRACT_OWNER;
++			break;
+ 		case OPTION_STRIP_COMPONENTS: /* GNU tar 1.15 */
+ 			bsdtar->strip_components = atoi(bsdtar->optarg);
+ 			break;
+@@ -654,7 +659,7 @@
+ 	"  -w    Interactive\n"
+ 	"Create: %p -c [options] [<file> | <dir> | @<archive> | -C <dir> ]\n"
+ 	"  <file>, <dir>  add these items to archive\n"
+-	"  -z, -j  Compress archive with gzip/bzip2\n"
++	"  -z, -j, -J, --lzma  Compress archive with gzip/bzip2/xz/lzma\n"
+ 	"  --format {ustar|pax|cpio|shar}  Select archive format\n"
+ 	"  --exclude <pattern>  Skip files that match pattern\n"
+ 	"  -C <dir>  Change to <dir> before processing remaining files\n"
+diff -urN old/libarchive/tar/bsdtar.h new/libarchive/tar/bsdtar.h
+--- old/libarchive/tar/bsdtar.h	2009-03-15 11:43:30.000000000 -0400
++++ new/libarchive/tar/bsdtar.h	2009-03-15 23:51:43.946000000 -0400
+@@ -127,6 +127,7 @@
+ 	OPTION_NUMERIC_OWNER,
+ 	OPTION_ONE_FILE_SYSTEM,
+ 	OPTION_POSIX,
++	OPTION_SAME_OWNER,
+ 	OPTION_STRIP_COMPONENTS,
+ 	OPTION_TOTALS,
+ 	OPTION_USE_COMPRESS_PROGRAM,
+diff -urN old/libarchive/tar/bsdtar_cygwin.c new/libarchive/tar/bsdtar_cygwin.c
+--- old/libarchive/tar/bsdtar_cygwin.c	1969-12-31 19:00:00.000000000 -0500
++++ new/libarchive/tar/bsdtar_cygwin.c	2009-03-15 23:51:43.946000000 -0400
+@@ -0,0 +1,141 @@
++/*-
++ * Copyright (c) 2009 Michihiro NAKAJIMA
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++ * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ *
++ * $FreeBSD$
++ */
++
++#if defined(__CYGWIN__)
++#define _WIN32_WINNT	0x500
++#define WINVER		0x500
++
++#include "bsdtar_platform.h"
++#include <errno.h>
++#include <stddef.h>
++#include <sys/utime.h>
++#include <sys/stat.h>
++#include <process.h>
++#include <stdlib.h>
++#include <wchar.h>
++#include <windows.h>
++#include <sddl.h>
++
++#include "bsdtar.h"
++
++#ifndef LIST_H
++static int
++_is_privileged(HANDLE thandle, const char *sidlist[])
++{
++	TOKEN_USER *tuser;
++	TOKEN_GROUPS  *tgrp;
++	DWORD bytes;
++	PSID psid;
++	DWORD i, g;
++	int member;
++
++	psid = NULL;
++	tuser = NULL;
++	tgrp = NULL;
++	member = 0;
++	for (i = 0; sidlist[i] != NULL && member == 0; i++) {
++		if (psid != NULL)
++			LocalFree(psid);
++		/* mingw/cygwin: incorrectly prototypes arg 1 as LPSTR
++                 * instead of LPCSTR. Work around it here
++                 */
++		if (ConvertStringSidToSidA((char *)sidlist[i], &psid) == 0) {
++			errno = EPERM;
++			return (-1);
++		}
++		if (tuser == NULL) {
++			GetTokenInformation(thandle, TokenUser, NULL, 0, &bytes);
++			tuser = malloc(bytes);
++			if (tuser == NULL) {
++				errno = ENOMEM;
++				member = -1;
++				break;
++			}
++			if (GetTokenInformation(thandle, TokenUser, tuser, bytes, &bytes) == 0) {
++				errno = EPERM;
++				member = -1;
++				break;
++			}
++		}
++		member = EqualSid(tuser->User.Sid, psid);
++		if (member)
++			break;
++		if (tgrp == NULL) {
++			GetTokenInformation(thandle, TokenGroups, NULL, 0, &bytes);
++			tgrp = malloc(bytes);
++			if (tgrp == NULL) {
++				errno = ENOMEM;
++				member = -1;
++				break;
++			}
++			if (GetTokenInformation(thandle, TokenGroups, tgrp, bytes, &bytes) == 0) {
++				errno = EPERM;
++				member = -1;
++				break;
++			}
++		}
++		for (g = 0; g < tgrp->GroupCount; g++) {
++			member = EqualSid(tgrp->Groups[g].Sid, psid);
++			if (member)
++				break;
++		}
++	}
++	LocalFree(psid);
++	free(tuser);
++	free(tgrp);
++
++	return (member);
++}
++
++int
++bsdtar_is_privileged(struct bsdtar *bsdtar)
++{
++	HANDLE thandle;
++	int ret;
++	const char *sidlist[] = {
++		"S-1-5-32-544",	/* Administrators */
++		"S-1-5-32-551", /* Backup Operators */
++		NULL
++	};
++
++	(void)bsdtar;/* UNUSED */
++	if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &thandle) == 0) {
++		bsdtar_warnc(bsdtar, EPERM, "Failed to check privilege");
++		return (0);
++	}
++	ret = _is_privileged(thandle, sidlist);
++	if (ret < 0) {
++		bsdtar_warnc(bsdtar, errno, "Failed to check privilege");
++		return (0);
++	}
++	return (ret);
++}
++
++
++#endif /* LIST_H */
++
++#endif
+diff -urN old/libarchive/tar/bsdtar_cygwin.h new/libarchive/tar/bsdtar_cygwin.h
+--- old/libarchive/tar/bsdtar_cygwin.h	1969-12-31 19:00:00.000000000 -0500
++++ new/libarchive/tar/bsdtar_cygwin.h	2009-03-15 23:51:43.946000000 -0400
+@@ -0,0 +1,44 @@
++/*-
++ * Copyright (c) 2009 Michihiro NAKAJIMA
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++ * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ *
++ * $FreeBSD$
++ */
++
++#ifndef BSDTAR_CYGWIN_H
++#define BSDTAR_CYGWIN_H 1
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++/* a foward declaration, of sorts */
++typedef struct bsdtar * struct_bsdtar_p;
++
++extern int	bsdtar_is_privileged(struct bsdtar *bsdtar);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* BSDTAR_CYGWIN_H */
+diff -urN old/libarchive/tar/bsdtar_platform.h new/libarchive/tar/bsdtar_platform.h
+--- old/libarchive/tar/bsdtar_platform.h	2009-03-15 11:43:30.000000000 -0400
++++ new/libarchive/tar/bsdtar_platform.h	2009-03-15 23:51:43.946000000 -0400
+@@ -164,8 +164,10 @@
+ #define	__LA_DEAD
+ #endif
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #include "bsdtar_windows.h"
++#elif defined(__CYGWIN__)
++#include "bsdtar_cygwin.h"
+ #else
+ #define bsdtar_is_privileged(bsdtar)	(bsdtar->user_uid == 0)
+ #endif
+diff -urN old/libarchive/tar/bsdtar_windows.c new/libarchive/tar/bsdtar_windows.c
+--- old/libarchive/tar/bsdtar_windows.c	2009-03-15 11:43:30.000000000 -0400
++++ new/libarchive/tar/bsdtar_windows.c	2009-03-15 23:51:43.961600000 -0400
+@@ -25,8 +25,9 @@
+  * $FreeBSD$
+  */
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ #define _WIN32_WINNT	0x500
++#define WINVER		0x500
+ 
+ #include "bsdtar_platform.h"
+ #include <errno.h>
+diff -urN old/libarchive/tar/cmdline.c new/libarchive/tar/cmdline.c
+--- old/libarchive/tar/cmdline.c	2009-03-15 11:43:30.000000000 -0400
++++ new/libarchive/tar/cmdline.c	2009-03-15 23:51:43.961600000 -0400
+@@ -112,6 +112,7 @@
+ 	{ "posix",		  0, OPTION_POSIX },
+ 	{ "preserve-permissions", 0, 'p' },
+ 	{ "read-full-blocks",	  0, 'B' },
++	{ "same-owner",	          0, OPTION_SAME_OWNER },
+ 	{ "same-permissions",     0, 'p' },
+ 	{ "strip-components",	  1, OPTION_STRIP_COMPONENTS },
+ 	{ "to-stdout",            0, 'O' },
+diff -urN old/libarchive/tar/read.c new/libarchive/tar/read.c
+--- old/libarchive/tar/read.c	2009-03-15 11:43:30.000000000 -0400
++++ new/libarchive/tar/read.c	2009-03-15 23:51:43.961600000 -0400
+@@ -390,7 +390,7 @@
+ 
+ 	/* Format the time using 'ls -l' conventions. */
+ 	tim = (time_t)st->st_mtime;
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* Windows' strftime function does not support %e format. */
+ 	if (abs(tim - now) > (365/2)*86400)
+ 		fmt = bsdtar->day_first ? "%d %b  %Y" : "%b %d  %Y";
+diff -urN old/libarchive/tar/test/main.c new/libarchive/tar/test/main.c
+--- old/libarchive/tar/test/main.c	2009-03-15 11:43:28.000000000 -0400
++++ new/libarchive/tar/test/main.c	2009-03-15 23:51:43.961600000 -0400
+@@ -809,7 +809,7 @@
+ 	/* If there were no failures, we can remove the work dir. */
+ 	if (failures == failures_before) {
+ 		if (!keep_temp_files && chdir(tmpdir) == 0) {
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 			systemf("rmdir /S /Q %s", tests[i].name);
+ #else
+ 			systemf("rm -rf %s", tests[i].name);
+@@ -912,7 +912,7 @@
+ 	int i, tests_run = 0, tests_failed = 0, opt;
+ 	time_t now;
+ 	char *refdir_alloc = NULL;
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	char *testprg;
+ #endif
+ 	const char *opt_arg, *progname, *p;
+@@ -921,8 +921,10 @@
+ 
+ 	(void)argc; /* UNUSED */
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/* Make sure open() function will be used with a binary mode. */
++	/* on cygwin, we need something similar, but instead link against */
++	/* a special startup object, binmode.o */
+ 	_set_fmode(_O_BINARY);
+ #endif
+ 	/*
+@@ -1014,7 +1016,7 @@
+ 	if (testprog == NULL)
+ 		usage(progname);
+ #endif
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	/*
+ 	 * command.com cannot accept the command used '/' with drive
+ 	 * name such as c:/xxx/command.exe when use '|' pipe handling.
+diff -urN old/libarchive/tar/test/test.h new/libarchive/tar/test/test.h
+--- old/libarchive/tar/test/test.h	2009-03-15 11:43:28.000000000 -0400
++++ new/libarchive/tar/test/test.h	2009-03-15 23:51:43.977200000 -0400
+@@ -37,7 +37,7 @@
+ #elif defined(__FreeBSD__)
+ /* Building as part of FreeBSD system requires a pre-built config.h. */
+ #include "config_freebsd.h"
+-#elif defined(_WIN32)
++#elif defined(_WIN32) && !defined(__CYGWIN__)
+ /* Win32 can't run the 'configure' script. */
+ #include "config_windows.h"
+ #else
+@@ -45,7 +45,7 @@
+ #error Oops: No config.h and no pre-built configuration in test.h.
+ #endif
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ #include <dirent.h>
+ #else
+ #define dirent direct
+@@ -58,7 +58,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <sys/stat.h>
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ #include <unistd.h>
+ #endif
+ #include <wchar.h>
+@@ -68,11 +68,14 @@
+ #endif
+ 
+ /* No non-FreeBSD platform will have __FBSDID, so just define it here. */
++/* ...except for Cygwin, and anything based on newlib... */
+ #ifdef __FreeBSD__
+ #include <sys/cdefs.h>  /* For __FBSDID */
+ #else
++#ifndef __FBSDID
+ #define	__FBSDID(a)     /* null */
+ #endif
++#endif
+ 
+ /*
+  * Redefine DEFINE_TEST for use in defining the test functions.
+diff -urN old/libarchive/tar/test/test_0.c new/libarchive/tar/test/test_0.c
+--- old/libarchive/tar/test/test_0.c	2009-03-15 11:43:27.000000000 -0400
++++ new/libarchive/tar/test/test_0.c	2009-03-15 23:51:43.977200000 -0400
+@@ -29,7 +29,7 @@
+  * This first test does basic sanity checks on the environment.  For
+  * most of these, we just exit on failure.
+  */
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ #define DEV_NULL "/dev/null"
+ #else
+ #define DEV_NULL "NUL"
+diff -urN old/libarchive/tar/test/test_basic.c new/libarchive/tar/test/test_basic.c
+--- old/libarchive/tar/test/test_basic.c	2009-03-15 11:43:27.000000000 -0400
++++ new/libarchive/tar/test/test_basic.c	2009-03-15 23:51:43.977200000 -0400
+@@ -31,7 +31,7 @@
+     const char *unpack_options, const char *flist)
+ {
+ 	struct stat st, st2;
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	char buff[128];
+ #endif
+ 	int r;
+@@ -39,7 +39,7 @@
+ 	assertEqualInt(0, mkdir(target, 0775));
+ 
+ 	/* Use the tar program to create an archive. */
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	r = systemf("%s cf - %s `cat %s` >%s/archive 2>%s/pack.err", testprog, pack_options, flist, target, target);
+ #else
+ 	r = systemf("%s cf - %s %s >%s/archive 2>%s/pack.err", testprog, pack_options, flist, target, target);
+@@ -72,7 +72,7 @@
+ 	assertEqualInt(r, 0);
+ 	if (r == 0) {
+ 		assert(S_ISREG(st.st_mode));
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 		assertEqualInt(0644, st.st_mode & 0777);
+ #else
+ 		assertEqualInt(0600, st.st_mode & 0700);
+@@ -88,7 +88,7 @@
+ 	assertEqualInt(r, 0);
+ 	if (r == 0) {
+ 		assert(S_ISREG(st2.st_mode));
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 		assertEqualInt(0644, st2.st_mode & 0777);
+ #else
+ 		assertEqualInt(0600, st2.st_mode & 0700);
+@@ -102,7 +102,7 @@
+ 		assertEqualInt(st.st_ino, st2.st_ino);
+ 	}
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	/* Symlink */
+ 	r = lstat("symlink", &st);
+ 	failure("Failed to stat file %s/symlink, errno=%d", target, errno);
+@@ -125,7 +125,7 @@
+ 	if (r == 0) {
+ 		assertEqualInt(r, 0);
+ 		assert(S_ISDIR(st.st_mode));
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 		assertEqualInt(0775, st.st_mode & 0777);
+ #else
+ 		assertEqualInt(0700, st.st_mode & 0700);
+@@ -170,7 +170,7 @@
+ 	/* All done. */
+ 	close(filelist);
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	flist = "filelist";
+ #else
+ 	flist = "file linkfile symlink dir";
+diff -urN old/libarchive/tar/test/test_copy.c new/libarchive/tar/test/test_copy.c
+--- old/libarchive/tar/test/test_copy.c	2009-03-15 11:43:27.000000000 -0400
++++ new/libarchive/tar/test/test_copy.c	2009-03-15 23:51:43.977200000 -0400
+@@ -64,7 +64,7 @@
+ 		buff2[0] = 'm';
+ 		assertEqualInt(0, link(buff, buff2));
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 		/* Create a symlink named "s/abcdef..." to the above. */
+ 		strcpy(buff2 + 3, buff);
+ 		buff[0] = 's';
+@@ -156,7 +156,7 @@
+ 			}
+ 		}
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 		/*
+ 		 * Symlink text doesn't include the 'original/' prefix,
+ 		 * so the limit here is 100 characters.
+diff -urN old/libarchive/tar/test/test_patterns.c new/libarchive/tar/test/test_patterns.c
+--- old/libarchive/tar/test/test_patterns.c	2009-03-15 11:43:27.000000000 -0400
++++ new/libarchive/tar/test/test_patterns.c	2009-03-15 23:51:43.992800000 -0400
+@@ -61,7 +61,7 @@
+ 	r = systemf("%s tf %s /tmp/foo/bar > tar2a.out 2> tar2a.err",
+ 	    testprog, reffile2);
+ 	assertEqualInt(r, 0);
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	p = "/tmp/foo/bar/\n/tmp/foo/bar/baz\n";
+ #else
+ 	p = "/tmp/foo/bar/\r\n/tmp/foo/bar/baz\r\n";
+diff -urN old/libarchive/tar/test/test_strip_components.c new/libarchive/tar/test/test_strip_components.c
+--- old/libarchive/tar/test/test_strip_components.c	2009-03-15 11:43:27.000000000 -0400
++++ new/libarchive/tar/test/test_strip_components.c	2009-03-15 23:51:43.992800000 -0400
+@@ -64,7 +64,7 @@
+ 	failure("d0/d1/ is too short and should not get restored");
+ 	assertEqualInt(-1, lstat("target/d1", &st));
+ 	failure("d0/d1/s2 is a symlink to something that won't be extracted");
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	assertEqualInt(-1, stat("target/s2", &st));
+ #else
+ 	skipping("symlink with stat()");
+diff -urN old/libarchive/tar/test/test_symlink_dir.c new/libarchive/tar/test/test_symlink_dir.c
+--- old/libarchive/tar/test/test_symlink_dir.c	2009-03-15 11:43:28.000000000 -0400
++++ new/libarchive/tar/test/test_symlink_dir.c	2009-03-15 23:51:43.992800000 -0400
+@@ -48,7 +48,7 @@
+ DEFINE_TEST(test_symlink_dir)
+ {
+ 	struct stat st;
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	struct stat st2;
+ #endif
+ 	int oldumask;
+@@ -78,7 +78,7 @@
+ 	assertEqualInt(0, mkdir("dest1", 0755));
+ 	/* "dir" is a symlink to an existing "real_dir" */
+ 	assertEqualInt(0, mkdir("dest1/real_dir", 0755));
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	assertEqualInt(0, symlink("real_dir", "dest1/dir"));
+ 	/* "dir2" is a symlink to a non-existing "real_dir2" */
+ 	assertEqualInt(0, symlink("real_dir2", "dest1/dir2"));
+@@ -91,7 +91,7 @@
+ 	/* "file" is a symlink to existing "real_file" */
+ 	assertEqualInt(0, mkfile("dest1/real_file", 0755, "abcdefg", 7));
+ 	assertEqualInt(0, symlink("real_file", "dest1/file"));
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	/* "file2" is a symlink to non-existing "real_file2" */
+ 	assertEqualInt(0, symlink("real_file2", "dest1/file2"));
+ #else
+@@ -126,7 +126,7 @@
+ 	assertEqualInt(0, mkdir("dest2", 0755));
+ 	/* "dir" is a symlink to existing "real_dir" */
+ 	assertEqualInt(0, mkdir("dest2/real_dir", 0755));
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	assertEqualInt(0, symlink("real_dir", "dest2/dir"));
+ 	/* "dir2" is a symlink to a non-existing "real_dir2" */
+ 	assertEqualInt(0, symlink("real_dir2", "dest2/dir2"));
+@@ -139,7 +139,7 @@
+ 	/* "file" is a symlink to existing "real_file" */
+ 	assertEqualInt(0, mkfile("dest2/real_file", 0755, "abcdefghi", 9));
+ 	assertEqualInt(0, symlink("real_file", "dest2/file"));
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	/* "file2" is a symlink to non-existing "real_file2" */
+ 	assertEqualInt(0, symlink("real_file2", "dest2/file2"));
+ #else
+@@ -150,7 +150,7 @@
+ 	/* dest2/dir symlink should be followed */
+ 	assertEqualInt(0, lstat("dest2/dir", &st));
+ 	failure("tar -xP removed symlink instead of following it");
+-#ifndef _WIN32
++#if !defined(_WIN32) || defined(__CYGWIN__)
+ 	if (assert(S_ISLNK(st.st_mode))) {
+ 		/* Only verify what the symlink points to if it
+ 		 * really is a symlink. */
+diff -urN old/libarchive/tar/test/test_windows.c new/libarchive/tar/test/test_windows.c
+--- old/libarchive/tar/test/test_windows.c	2009-03-15 11:43:28.000000000 -0400
++++ new/libarchive/tar/test/test_windows.c	2009-03-15 23:51:43.992800000 -0400
+@@ -24,7 +24,7 @@
+  */
+ #include "test.h"
+ 
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ static void
+ mkfile(const char *name)
+ {
+@@ -125,11 +125,11 @@
+ static const char list6[] =
+     "fff\\\\abca\r\nfff\\\\acca\r\naaa\\\\xxa/\r\naaa\\\\xxa/file1\r\n"
+     "aaa\\\\xxb/\r\naaa\\\\xxb/file1\r\n";
+-#endif /* _WIN32 */
++#endif /* _WIN32 && !__CYGWIN__ */
+ 
+ DEFINE_TEST(test_windows)
+ {
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 	char *fp1, *fp2;
+ 
+ 	/*
+@@ -318,5 +318,5 @@
+ 	free(fp2);
+ #else
+ 	skipping("Windows specific test");
+-#endif /* _WIN32 */
++#endif /* _WIN32 && !__CYGWIN__ */
+ }
+diff -urN old/libarchive/tar/tree.c new/libarchive/tar/tree.c
+--- old/libarchive/tar/tree.c	2009-03-15 11:43:30.000000000 -0400
++++ new/libarchive/tar/tree.c	2009-03-15 23:51:44.008400000 -0400
+@@ -84,7 +84,7 @@
+ 	ino_t ino;
+ #ifdef HAVE_FCHDIR
+ 	int fd;
+-#elif defined(_WIN32)
++#elif defined(_WIN32) && !defined(__CYGWIN__)
+ 	char *fullpath;
+ #else
+ #error fchdir function required.
+@@ -107,7 +107,7 @@
+ 	DIR	*d;
+ #ifdef HAVE_FCHDIR
+ 	int	 initialDirFd;
+-#elif defined(_WIN32)
++#elif defined(_WIN32) && !defined(__CYGWIN__)
+ 	char	*initialDir;
+ #endif
+ 	int	 flags;
+@@ -175,7 +175,7 @@
+ 	t->stack = te;
+ #ifdef HAVE_FCHDIR
+ 	te->fd = -1;
+-#elif defined(_WIN32)
++#elif defined(_WIN32) && !defined(__CYGWIN__)
+ 	te->fullpath = NULL;
+ #endif
+ 	te->name = strdup(path);
+@@ -229,7 +229,7 @@
+ 	tree_append(t, path, strlen(path));
+ #ifdef HAVE_FCHDIR
+ 	t->initialDirFd = open(".", O_RDONLY);
+-#elif defined(_WIN32)
++#elif defined(_WIN32) && !defined(__CYGWIN__)
+ 	t->initialDir = getcwd(NULL, 0);
+ #endif
+ 	/*
+@@ -260,7 +260,7 @@
+ 			r = TREE_ERROR_FATAL;
+ 		}
+ 		close(te->fd);
+-#elif defined(_WIN32)
++#elif defined(_WIN32) && !defined(__CYGWIN__)
+ 		if (chdir(te->fullpath) != 0) {
+ 			t->tree_errno = errno;
+ 			r = TREE_ERROR_FATAL;
+@@ -360,7 +360,7 @@
+ 			if (t->stack->flags & isDirLink) {
+ #ifdef HAVE_FCHDIR
+ 				t->stack->fd = open(".", O_RDONLY);
+-#elif defined(_WIN32)
++#elif defined(_WIN32) && !defined(__CYGWIN__)
+ 				t->stack->fullpath = getcwd(NULL, 0);
+ #endif
+ 				t->openCount++;
+@@ -591,7 +591,7 @@
+ 		close(t->initialDirFd);
+ 		t->initialDirFd = -1;
+ 	}
+-#elif defined(_WIN32)
++#elif defined(_WIN32) && !defined(__CYGWIN__)
+ 	if (t->initialDir != NULL) {
+ 		chdir(t->initialDir);
+ 		free(t->initialDir);
+diff -urN old/libarchive/tar/write.c new/libarchive/tar/write.c
+--- old/libarchive/tar/write.c	2009-03-15 11:43:30.000000000 -0400
++++ new/libarchive/tar/write.c	2009-03-15 23:51:44.008400000 -0400
+@@ -465,7 +465,7 @@
+ 				    arg + 1) != 0)
+ 					break;
+ 			} else
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(__CYGWIN__)
+ 				write_hierarchy_win(bsdtar, a, arg,
+ 				    write_hierarchy);
+ #else

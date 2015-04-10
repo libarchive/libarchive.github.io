@@ -1,0 +1,11 @@
+--- libarchive-3.0.3/libarchive/archive_read_support_format_zip.c.orig	2012-01-10 06:53:21.000000000 +0000
++++ libarchive-3.0.3/libarchive/archive_read_support_format_zip.c	2012-01-21 15:27:30.882627074 +0000
+@@ -1093,7 +1093,7 @@ archive_read_format_zip_read_data_skip(s
+ 				return (ARCHIVE_FATAL);
+ 			}
+ 			p = buff;
+-			while (p < buff + bytes_avail - 16) {
++			while (p <= buff + bytes_avail - 16) {
+ 				if (p[3] == 'P') { p += 3; }
+ 				else if (p[3] == 'K') { p += 2; }
+ 				else if (p[3] == '\007') { p += 1; }

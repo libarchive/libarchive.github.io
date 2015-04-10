@@ -1,0 +1,42 @@
+test_pax_filename_encoding
+
+..\..\..\libarchive\libarchive\test\test_pax_filename_encoding.c(292): ARCHIVE_WARN != archive_read_next_header(a, &entry)
+   Description: A non-convertible pathname should cause a warning.
+      ARCHIVE_WARN=-20 (0xffffffffffffffec, 01777777777777777777754)
+      archive_read_next_header(a, &entry)=0 (0x0, 00)
+..\..\..\libarchive\libarchive\test\test_pax_filename_encoding.c(295): badname_utf8 != archive_entry_pathname(entry)
+   Description: If native locale can't convert, we should get UTF-8 back.
+      badname_utf8 = "xxx\xE1\x88\xB4yyy\xE5\x99\xB8zzz" (length 0)
+      archive_entry_pathname(entry) = "xxx?yyy\x93\xD3zzz" (length 0)
+..\..\..\libarchive\libarchive\test\test_pax_filename_encoding.c(298): ARCHIVE_WARN != archive_read_next_header(a, &entry)
+   Description: A non-convertible gname should cause a warning.
+      ARCHIVE_WARN=-20 (0xffffffffffffffec, 01777777777777777777754)
+      archive_read_next_header(a, &entry)=0 (0x0, 00)
+..\..\..\libarchive\libarchive\test\test_pax_filename_encoding.c(301): badname_utf8 != archive_entry_gname(entry)
+   Description: If native locale can't convert, we should get UTF-8 back.
+      badname_utf8 = "xxx\xE1\x88\xB4yyy\xE5\x99\xB8zzz" (length 0)
+      archive_entry_gname(entry) = "xxx?yyy\x93\xD3zzz" (length 0)
+..\..\..\libarchive\libarchive\test\test_pax_filename_encoding.c(304): ARCHIVE_WARN != archive_read_next_header(a, &entry)
+   Description: A non-convertible uname should cause a warning.
+      ARCHIVE_WARN=-20 (0xffffffffffffffec, 01777777777777777777754)
+      archive_read_next_header(a, &entry)=0 (0x0, 00)
+..\..\..\libarchive\libarchive\test\test_pax_filename_encoding.c(307): badname_utf8 != archive_entry_uname(entry)
+   Description: If native locale can't convert, we should get UTF-8 back.
+      badname_utf8 = "xxx\xE1\x88\xB4yyy\xE5\x99\xB8zzz" (length 0)
+      archive_entry_uname(entry) = "xxx?yyy\x93\xD3zzz" (length 0)
+..\..\..\libarchive\libarchive\test\test_pax_filename_encoding.c(310): ARCHIVE_WARN != archive_read_next_header(a, &entry)
+   Description: A non-convertible hardlink should cause a warning.
+      ARCHIVE_WARN=-20 (0xffffffffffffffec, 01777777777777777777754)
+      archive_read_next_header(a, &entry)=0 (0x0, 00)
+..\..\..\libarchive\libarchive\test\test_pax_filename_encoding.c(313): badname_utf8 != archive_entry_hardlink(entry)
+   Description: If native locale can't convert, we should get UTF-8 back.
+      badname_utf8 = "xxx\xE1\x88\xB4yyy\xE5\x99\xB8zzz" (length 0)
+      archive_entry_hardlink(entry) = "xxx?yyy\x93\xD3zzz" (length 0)
+..\..\..\libarchive\libarchive\test\test_pax_filename_encoding.c(316): ARCHIVE_WARN != archive_read_next_header(a, &entry)
+   Description: A non-convertible symlink should cause a warning.
+      ARCHIVE_WARN=-20 (0xffffffffffffffec, 01777777777777777777754)
+      archive_read_next_header(a, &entry)=0 (0x0, 00)
+..\..\..\libarchive\libarchive\test\test_pax_filename_encoding.c(320): badname_utf8 != archive_entry_symlink(entry)
+   Description: If native locale can't convert, we should get UTF-8 back.
+      badname_utf8 = "xxx\xE1\x88\xB4yyy\xE5\x99\xB8zzz" (length 0)
+      archive_entry_symlink(entry) = "xxx?yyy\x93\xD3zzz" (length 0)

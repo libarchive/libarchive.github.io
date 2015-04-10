@@ -1,0 +1,90 @@
+(gdb) bt full
+#0  0x00007ffff6c5a8c8 in write () from /lib/libc.so.6
+No symbol table info available.
+#1  0x000000000045a803 in file_write (a=0x6b9090, client_data=0x6b9650, buff=0x6d8800, length=10240)
+    at libarchive/archive_write_open_filename.c:228
+        mine = 0x6b9650
+        bytesWritten = 2048
+#2  0x00000000004550f1 in archive_write_client_write (f=0x6b9670, _buff=0x6cd000, length=77824)
+    at libarchive/archive_write.c:385
+        a = 0x6b9090
+        state = 0x6b96e0
+        buff = 0x6d8800 ""
+        remaining = 30720
+        to_copy = 4096
+        bytes_written = 2048
+#3  0x0000000000454c31 in __archive_write_filter (f=0x6b9670, buff=0x6cd000, length=77824)
+    at libarchive/archive_write.c:235
+        r = 0
+#4  0x0000000000454d05 in __archive_write_output (a=0x6b9090, buff=0x6cd000, length=77824)
+    at libarchive/archive_write.c:267
+No locals.
+#5  0x0000000000479a44 in archive_write_pax_data (a=0x6b9090, buff=0x6bc000, s=77824)
+    at libarchive/archive_write_set_format_pax.c:1662
+        p = 0x6cd000 ""
+        pax = 0x6b95c0
+        ws = 77824
+        total = 69632
+        ret = 0
+#6  0x0000000000455a3b in _archive_write_data (_a=0x6b9090, buff=0x6bc000, s=77824) at libarchive/archive_write.c:671
+        a = 0x6b9090
+#7  0x00000000004546c3 in archive_write_data (a=0x6b9090, buff=0x6bc000, s=77824) at libarchive/archive_virtual.c:115
+No locals.
+#8  0x000000000040ede5 in write_file_data (bsdtar=0x7fffffffdae0, a=0x6b9090, entry=0x6d3680, fd=9, align=4096)
+    at tar/write.c:1064
+        bytes_read = 77824
+        bytes_written = 77824
+        progress = 2027520
+        buff_size = 77824
+        buff = 0x6bc000 ""
+#9  0x000000000040eb63 in write_entry (bsdtar=0x7fffffffdae0, a=0x6b9090, entry=0x6d3680) at tar/write.c:1001
+        fd = 9
+        e = 0
+        align = 4096
+#10 0x000000000040e9b1 in write_file (bsdtar=0x7fffffffdae0, a=0x6b9090, entry=0x6d3680) at tar/write.c:947
+No locals.
+#11 0x000000000040e8ec in write_hierarchy (bsdtar=0x7fffffffdae0, a=0x6b9090, path=0x7fffffffe14c "vmlinux")
+    at tar/write.c:926
+        lst = 0x6d30d8
+        r = 0
+        name = 0x6d3270 "vmlinux"
+        st = 0x6d30d8
+        descend = 0
+        entry = 0x6d3680
+        spare_entry = 0x0
+        tree = 0x6d3070
+        symlink_mode = 0 '\000'
+        first_dev = 2066
+        dev_recorded = 1
+        tree_ret = 1
+#12 0x000000000040db19 in write_archive (a=0x6b9090, bsdtar=0x7fffffffdae0) at tar/write.c:465
+        arg = 0x7fffffffe14c "vmlinux"
+        entry = 0x7fffffffe144
+        sparse_entry = 0x45a447
+#13 0x000000000040d127 in tar_mode_c (bsdtar=0x7fffffffdae0) at tar/write.c:224
+        a = 0x6b9090
+        r = 0
+#14 0x000000000040603c in main (argc=4, argv=0x7fffffffdd28) at tar/bsdtar.c:671
+        bsdtar = 0x7fffffffdae0
+        bsdtar_storage = {filename = 0x7fffffffe144 "foo.tar", create_format = 0x495452 "pax restricted", 
+          pending_chdir = 0x0, names_from_file = 0x0, newer_ctime_filter = 0, newer_ctime_sec = 0, 
+          newer_ctime_nsec = 0, newer_mtime_filter = 0, newer_mtime_sec = 0, newer_mtime_nsec = 0, 
+          bytes_per_block = 10240, bytes_in_last_block = -1, verbose = 0, extract_flags = 772, strip_components = 0, 
+          gid = -1, gname = 0x0, uid = -1, uname = 0x0, mode = 99 'c', symlink_mode = 0 '\000', 
+          create_compression = 0 '\000', compress_program = 0x0, option_absolute_paths = 0 '\000', 
+          option_chroot = 0 '\000', option_dont_traverse_mounts = 0 '\000', option_fast_read = 0 '\000', 
+          option_options = 0x0, option_honor_nodump = 0 '\000', option_interactive = 0 '\000', 
+          option_no_owner = 0 '\000', option_no_subdirs = 0 '\000', option_numeric_owner = 0 '\000', 
+          option_null = 0 '\000', option_stdout = 0 '\000', option_totals = 0 '\000', option_unlink_first = 0 '\000', 
+          option_warn_links = 0 '\000', day_first = 0 '\000', enable_copyfile = 1 '\001', getopt_state = 2, 
+          getopt_word = 0x7fffffffe144 "foo.tar", fd = -1, argc = 1, argv = 0x7fffffffdd40, argument = 0x0, 
+          gs_width = 0, u_width = 0, user_uid = 1000, return_value = 0, warned_lead_slash = 0 '\000', 
+          next_line_is_dir = 0 '\000', diskreader = 0x6d1f70, resolver = 0x6cff30, archive_dir = 0x0, 
+          gname_cache = 0x0, buff = 0x6bbf20 "", buff_size = 81920, matching = 0x0, security = 0x0, 
+          uname_cache = 0x0, siginfo = 0x0, substitution = 0x0}
+        opt = -1
+        t = 4214400
+        option_o = 0 '\000'
+        possible_help_request = 0 '\000'
+        buff = "\000\000\000\000\001\000\000\000\021\b\000\000\001\000\000"
+        now = 1326064834

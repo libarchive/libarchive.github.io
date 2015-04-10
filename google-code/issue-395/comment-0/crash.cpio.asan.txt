@@ -1,0 +1,20 @@
+ASAN:SIGSEGV
+=================================================================
+==9542==ERROR: AddressSanitizer: SEGV on unknown address 0x630f80303850 (pc 0x7f456ca56b90 sp 0x7fff9c399178 bp 0x7fff9c399a00 T0)
+    #0 0x7f456ca56b8f (/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.2/libasan.so.1+0x62b8f)
+    #1 0x7f456ca23c92 (/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.2/libasan.so.1+0x2fc92)
+    #2 0x46f879 in memcpy /usr/include/bits/string3.h:51
+    #3 0x46f879 in __archive_read_filter_ahead /mnt/ram/libarchive/libarchive/archive_read.c:1448
+    #4 0x46f879 in __archive_read_ahead /mnt/ram/libarchive/libarchive/archive_read.c:1285
+    #5 0x507f15 in header_bin_le /mnt/ram/libarchive/libarchive/archive_read_support_format_cpio.c:868
+    #6 0x50a997 in archive_read_format_cpio_read_header /mnt/ram/libarchive/libarchive/archive_read_support_format_cpio.c:377
+    #7 0x461211 in _archive_read_next_header2 /mnt/ram/libarchive/libarchive/archive_read.c:643
+    #8 0x461211 in _archive_read_next_header /mnt/ram/libarchive/libarchive/archive_read.c:683
+    #9 0x4145d0 in mode_in /mnt/ram/libarchive/cpio/cpio.c:968
+    #10 0x4145d0 in main /mnt/ram/libarchive/cpio/cpio.c:411
+    #11 0x7f456b66af9f in __libc_start_main (/lib64/libc.so.6+0x1ff9f)
+    #12 0x41a351 (/mnt/ram/libarchive/b/bin/bsdcpio+0x41a351)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV ??:0 ??
+==9542==ABORTING

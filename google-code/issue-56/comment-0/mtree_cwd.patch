@@ -1,0 +1,86 @@
+Index: tar/test/test_mtree_cwd.c
+===================================================================
+--- tar/test/test_mtree_cwd.c	(revision 0)
++++ tar/test/test_mtree_cwd.c	(revision 0)
+@@ -0,0 +1,44 @@
++/*-
++ * Copyright (c) 2003-2009 Tim Kientzle
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++ * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++#include "test.h"
++__FBSDID("$FreeBSD$");
++
++/*
++ * Regression test:  Using "." as contents in an mtree archive entry
++ * caused a crashdump when reading the archive.
++ */
++DEFINE_TEST(test_mtree_cwd)
++{
++	int r;
++
++	assertMakeFile("test1.mtree", 0777, "#mtree\nd type=dir content=.\n");
++
++	r = systemf("%s cf test1.tar @test1.mtree >test1.out 2>test1.err",
++	    testprog);
++	failure("Error invoking %s cf", testprog);
++	assertEqualInt(r, 0);
++	assertEmptyFile("test1.out");
++	assertEmptyFile("test1.err");
++}
+Index: tar/test/CMakeLists.txt
+===================================================================
+--- tar/test/CMakeLists.txt	(revision 1737)
++++ tar/test/CMakeLists.txt	(working copy)
+@@ -14,6 +14,7 @@
+     test_empty_mtree.c
+     test_getdate.c
+     test_help.c
++    test_mtree_cwd.c
+     test_option_T_upper.c
+     test_option_q.c
+     test_option_r.c
+Index: libarchive/archive_read_support_format_mtree.c
+===================================================================
+--- libarchive/archive_read_support_format_mtree.c	(revision 1737)
++++ libarchive/archive_read_support_format_mtree.c	(working copy)
+@@ -1040,7 +1040,7 @@
+ 	 * The current directory is somewhat special, it should be archived
+ 	 * only once as it will confuse extraction otherwise.
+ 	 */
+-	if (strcmp(src, ".") == 0)
++	if (mentry != NULL && strcmp(src, ".") == 0)
+ 		mentry->full = 1;
+ 
+ 	while (*src != '\0') {
+Index: Makefile.am
+===================================================================
+--- Makefile.am	(revision 1737)
++++ Makefile.am	(working copy)
+@@ -467,6 +467,7 @@
+ 	tar/test/test_empty_mtree.c				\
+ 	tar/test/test_getdate.c					\
+ 	tar/test/test_help.c					\
++	tar/test/test_mtree_cwd.c				\
+ 	tar/test/test_option_T_upper.c				\
+ 	tar/test/test_option_q.c				\
+ 	tar/test/test_option_r.c				\

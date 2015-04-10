@@ -1,0 +1,13 @@
+--- libarchive-3.0.2.orig/tar/util.c	2011-12-24 18:56:23.000000000 +0100
++++ libarchive_r4034/tar/util.c	2011-12-29 15:10:55.004179800 +0100
+@@ -112,6 +112,10 @@
+ 	/* Try formatting into the stack buffer. */
+ 	va_start(ap, fmt);
+ 	length = vsnprintf(fmtbuff, fmtbuff_length, fmt, ap);
++	if (length == -1) {
++		va_start(ap, fmt);
++		length = _vscprintf(fmt,ap);
++	}
+ 	va_end(ap);
+ 
+ 	/* If the result was too large, allocate a buffer on the heap. */

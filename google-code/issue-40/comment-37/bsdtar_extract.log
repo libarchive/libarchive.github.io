@@ -1,0 +1,25 @@
+$ time LD_LIBRARY_PATH=.libs .libs/bsdtar -xf ~/test_read_format_rar_multi_lzss_blocks.rar
+
+real    0m0.084s
+user    0m0.060s
+sys     0m0.020s
+$ time LD_LIBRARY_PATH=.libs .libs/bsdtar -xf ~/test_read_format_rar_multi_lzss_blocks.rar
+
+real    0m0.088s
+user    0m0.060s
+sys     0m0.024s
+$ time LD_LIBRARY_PATH=.libs .libs/bsdtar -xf ~/test_read_format_rar_multi_lzss_blocks.rar
+
+real    0m0.086s
+user    0m0.064s
+sys     0m0.020s
+$ time LD_LIBRARY_PATH=.libs .libs/bsdtar -xf ~/test_read_format_rar_multi_lzss_blocks.rar
+
+real    0m0.086s
+user    0m0.060s
+sys     0m0.024s
+$ time LD_LIBRARY_PATH=.libs .libs/bsdtar -xf ~/test_read_format_rar_multi_lzss_blocks.rar
+
+real    0m0.089s
+user    0m0.064s
+sys     0m0.024s

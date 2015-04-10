@@ -1,0 +1,4 @@
+1573c1573
+< 	unsigned i, mask = 0, avail;
+---
+> 	unsigned i, mask = 0, avail = 0;

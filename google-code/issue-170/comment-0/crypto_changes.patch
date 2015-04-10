@@ -1,0 +1,2180 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index c68b8d9..72ae682 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -311,122 +311,125 @@ ELSE()
+ ENDIF()
+ 
+ #
+-# How to prove that HASH functions, which have several names on various
+-# platforms, can be mapped to archive_{hash name}_init,
+-# archive_{hash name}_update and archive_{hash name}_final through
+-# archive_hash.h
++# How to prove that CRYPTO functions, which have several names on various
++# platforms, just see if archive_crypto.c can compile and link against
++# required libraries.
+ #
+-MACRO(CHECK_MD HASH IMPLEMENTATIONS)
++MACRO(CHECK_CRYPTO CRYPTO IMPLEMENTATIONS)
+     IF(HAVE_SYS_TYPES_H)
+-        SET(HASH_HEADER_CONFIG "#define HAVE_SYS_TYPES_H 1\n")
++        SET(CRYPTO_HEADER_CONFIG "#define HAVE_SYS_TYPES_H 1\n")
+     ELSE(HAVE_SYS_TYPES_H)
+-        SET(HASH_HEADER_CONFIG "")
++        SET(CRYPTO_HEADER_CONFIG "")
+     ENDIF(HAVE_SYS_TYPES_H)
+-    STRING(TOLOWER "${HASH}" lower_hash)
+-    STRING(TOUPPER "${HASH}" hash)
++    STRING(TOLOWER "${CRYPTO}" lower_crypto)
++    STRING(TOUPPER "${CRYPTO}" crypto)
+ 
+     FOREACH(IMPLEMENTATION ${IMPLEMENTATIONS})
+       IF ("${IMPLEMENTATION}" MATCHES "^OPENSSL$" AND NOT OPENSSL_FOUND)
+-        SET(ARCHIVE_HASH_${HASH}_${IMPLEMENTATION} FALSE)
++        SET(ARCHIVE_CRYPTO_${CRYPTO}_${IMPLEMENTATION} FALSE)
+       ENDIF ("${IMPLEMENTATION}" MATCHES "^OPENSSL$" AND NOT OPENSSL_FOUND)
+-      IF(NOT DEFINED ARCHIVE_HASH_${HASH}_${IMPLEMENTATION})
++      IF(NOT DEFINED ARCHIVE_CRYPTO_${CRYPTO}_${IMPLEMENTATION})
+         # Probe the local implementation for whether this
+-	# hash implementation is available on this platform.
+-	SET(TRY_HASH_REQUIRED_INCLUDES
+-	  "-DINCLUDE_DIRECTORIES:STRING=${CMAKE_CURRENT_SOURCE_DIR}/libarchive")
+-	SET(TRY_HASH_REQUIRED_LIBS)
++	# crypto implementation is available on this platform.
++	SET(TRY_CRYPTO_REQUIRED_INCLUDES
++	  "-DINCLUDE_DIRECTORIES:STRING=${CMAKE_CURRENT_SOURCE_DIR}/libarchive;${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp")
++	SET(TRY_CRYPTO_REQUIRED_LIBS)
+ 	IF ("${IMPLEMENTATION}" MATCHES "^OPENSSL$" AND OPENSSL_FOUND)
+-	    SET(TRY_HASH_REQUIRED_INCLUDES
+-	      "${TRY_HASH_REQUIRED_INCLUDES};${OPENSSL_INCLUDE_DIR}")
+-	    SET(TRY_HASH_REQUIRED_LIBS
++	    SET(TRY_CRYPTO_REQUIRED_INCLUDES
++	      "${TRY_CRYPTO_REQUIRED_INCLUDES};${OPENSSL_INCLUDE_DIR}")
++	    SET(TRY_CRYPTO_REQUIRED_LIBS
+ 	        "-DLINK_LIBRARIES:STRING=${OPENSSL_LIBRARIES}")
+ 	ENDIF ("${IMPLEMENTATION}" MATCHES "^OPENSSL$" AND OPENSSL_FOUND)
+ 
+-	SET(SOURCE "#define ${hash}_COMPILE_TEST
+-#define ARCHIVE_HASH_${hash}_${IMPLEMENTATION}
+-#define __LIBARCHIVE_BUILD
+-${HASH_HEADER_CONFIG}
+-#include \"archive_hash.h\"
++	FILE(READ "${CMAKE_CURRENT_SOURCE_DIR}/libarchive/archive_crypto.c"
++	     ARCHIVE_CRYPTO_C)
++
++	SET(SOURCE "
++#define ARCHIVE_${crypto}_COMPILE_TEST
++#define ARCHIVE_CRYPTO_${crypto}_${IMPLEMENTATION}
++#define PLATFORM_CONFIG_H \"check_crypto_md.h\"
++
++${ARCHIVE_CRYPTO_C}
+ 
+ int
+ main(int argc, char **argv)
+ {
+-	archive_${lower_hash}_ctx ctx;
+-
+-	archive_${lower_hash}_init(&ctx);
+-	archive_${lower_hash}_update(&ctx, *argv, argc);
+-	archive_${lower_hash}_final(&ctx, *argv);
++  archive_${lower_crypto}_ctx ctx;
++  __archive_crypto.${lower_crypto}init(&ctx);
++  __archive_crypto.${lower_crypto}update(&ctx, *argv, argc);
++  __archive_crypto.${lower_crypto}final(&ctx, NULL);
+ 	return 0;
+ }
+ ")
+ 
+-	FILE(WRITE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/check_hash_md.c" "${SOURCE}")
+-	MESSAGE(STATUS "Checking support for ARCHIVE_HASH_${HASH}_${IMPLEMENTATION}")
++  FILE(WRITE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/check_crypto_md.h" "")
++	FILE(WRITE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/check_crypto_md.c" "${SOURCE}")
++	MESSAGE(STATUS "Checking support for ARCHIVE_CRYPTO_${CRYPTO}_${IMPLEMENTATION}")
+ 
+-	TRY_COMPILE(ARCHIVE_HASH_${HASH}_${IMPLEMENTATION}
++	TRY_COMPILE(ARCHIVE_CRYPTO_${CRYPTO}_${IMPLEMENTATION}
+ 	  ${CMAKE_BINARY_DIR}
+-	  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/check_hash_md.c
++	  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/check_crypto_md.c
+ 	  CMAKE_FLAGS
+-	   "${TRY_HASH_REQUIRED_LIBS}"
+-	   "${TRY_HASH_REQUIRED_INCLUDES}"
++	   "${TRY_CRYPTO_REQUIRED_LIBS}"
++	   "${TRY_CRYPTO_REQUIRED_INCLUDES}"
+ 	  OUTPUT_VARIABLE OUTPUT)
+ 
+ 	# Inform user whether or not we found it; if not, log why we didn't.
+-        IF (ARCHIVE_HASH_${HASH}_${IMPLEMENTATION})
+-          MESSAGE(STATUS "Checking support for ARCHIVE_HASH_${HASH}_${IMPLEMENTATION} -- found")
+-        ELSE (ARCHIVE_HASH_${HASH}_${IMPLEMENTATION})
+-          MESSAGE(STATUS "Checking support for ARCHIVE_HASH_${HASH}_${IMPLEMENTATION} -- not found")
++        IF (ARCHIVE_CRYPTO_${CRYPTO}_${IMPLEMENTATION})
++          MESSAGE(STATUS "Checking support for ARCHIVE_CRYPTO_${CRYPTO}_${IMPLEMENTATION} -- found")
++        ELSE (ARCHIVE_CRYPTO_${CRYPTO}_${IMPLEMENTATION})
++          MESSAGE(STATUS "Checking support for ARCHIVE_CRYPTO_${CRYPTO}_${IMPLEMENTATION} -- not found")
+           FILE(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
+-    	    "Checking support for ARCHIVE_HASH_${HASH}_${IMPLEMENTATION} failed with the following output:\n"
++    	    "Checking support for ARCHIVE_CRYPTO_${CRYPTO}_${IMPLEMENTATION} failed with the following output:\n"
+     	    "${OUTPUT}\n"
+     	    "Source file was:\n${SOURCE}\n")
+-        ENDIF (ARCHIVE_HASH_${HASH}_${IMPLEMENTATION})
+-      ENDIF(NOT DEFINED ARCHIVE_HASH_${HASH}_${IMPLEMENTATION})
++        ENDIF (ARCHIVE_CRYPTO_${CRYPTO}_${IMPLEMENTATION})
++      ENDIF(NOT DEFINED ARCHIVE_CRYPTO_${CRYPTO}_${IMPLEMENTATION})
+ 
+       # Add appropriate libs/includes depending on whether the implementation
+       # was found on this platform.
+-      IF (ARCHIVE_HASH_${HASH}_${IMPLEMENTATION})
++      IF (ARCHIVE_CRYPTO_${CRYPTO}_${IMPLEMENTATION})
+         IF ("${IMPLEMENTATION}" MATCHES "^OPENSSL$" AND OPENSSL_FOUND)
+           INCLUDE_DIRECTORIES(${OPENSSL_INCLUDE_DIR})
+ 	  LIST(APPEND ADDITIONAL_LIBS ${OPENSSL_LIBRARIES})
+ 	   LIST(REMOVE_DUPLICATES ADDITIONAL_LIBS)
+         ENDIF ("${IMPLEMENTATION}" MATCHES "^OPENSSL$" AND OPENSSL_FOUND)
+-      ENDIF (ARCHIVE_HASH_${HASH}_${IMPLEMENTATION})
++      ENDIF (ARCHIVE_CRYPTO_${CRYPTO}_${IMPLEMENTATION})
+     ENDFOREACH(IMPLEMENTATION)
+-ENDMACRO(CHECK_MD HASH IMPLEMENTATIONS)
++ENDMACRO(CHECK_CRYPTO CRYPTO IMPLEMENTATIONS)
+ 
+ #
+-# HASH functions on Windows is defined at archive_windows.c, thus we do not
+-# need the test what the functions can be mapped to archive_{hash name}_init,
+-# archive_{hash name}_update and archive_{hash name}_final.
+-# The functions on Windows use CALG_{hash name} macro to create a crypt object
+-# and then we need to know what CALG_{hash name} macros is available to show
+-# ARCHIVE_HASH_{hash name}_WIN macros because Windows 2000 and earlier version
++# CRYPTO functions on Windows is defined at archive_windows.c, thus we do not
++# need the test what the functions can be mapped to archive_{crypto name}_init,
++# archive_{crypto name}_update and archive_{crypto name}_final.
++# The functions on Windows use CALG_{crypto name} macro to create a crypt object
++# and then we need to know what CALG_{crypto name} macros is available to show
++# ARCHIVE_CRYPTO_{crypto name}_WIN macros because Windows 2000 and earlier version
+ # of Windows XP do not support SHA256, SHA384 and SHA512.
+ #
+-MACRO(CHECK_HASH_WIN HASH_LIST)
++MACRO(CHECK_CRYPTO_WIN CRYPTO_LIST)
+   IF(WIN32 AND NOT CYGWIN)
+-    FOREACH(HASH ${HASH_LIST})
+-      IF(NOT DEFINED ARCHIVE_HASH_${HASH}_WIN)
+-	STRING(TOUPPER "${HASH}" hash)
++    FOREACH(CRYPTO ${CRYPTO_LIST})
++      IF(NOT DEFINED ARCHIVE_CRYPTO_${CRYPTO}_WIN)
++	STRING(TOUPPER "${CRYPTO}" crypto)
+ 	SET(ALGID "")
+-	IF ("${HASH}" MATCHES "^MD5$")
++	IF ("${CRYPTO}" MATCHES "^MD5$")
+ 	    SET(ALGID "CALG_MD5")
+-	ENDIF ("${HASH}" MATCHES "^MD5$")
+-	IF ("${HASH}" MATCHES "^SHA1$")
++	ENDIF ("${CRYPTO}" MATCHES "^MD5$")
++	IF ("${CRYPTO}" MATCHES "^SHA1$")
+ 	    SET(ALGID "CALG_SHA1")
+-	ENDIF ("${HASH}" MATCHES "^SHA1$")
+-	IF ("${HASH}" MATCHES "^SHA256$")
++	ENDIF ("${CRYPTO}" MATCHES "^SHA1$")
++	IF ("${CRYPTO}" MATCHES "^SHA256$")
+ 	    SET(ALGID "CALG_SHA_256")
+-	ENDIF ("${HASH}" MATCHES "^SHA256$")
+-	IF ("${HASH}" MATCHES "^SHA384$")
++	ENDIF ("${CRYPTO}" MATCHES "^SHA256$")
++	IF ("${CRYPTO}" MATCHES "^SHA384$")
+ 	    SET(ALGID "CALG_SHA_384")
+-	ENDIF ("${HASH}" MATCHES "^SHA384$")
+-	IF ("${HASH}" MATCHES "^SHA512$")
++	ENDIF ("${CRYPTO}" MATCHES "^SHA384$")
++	IF ("${CRYPTO}" MATCHES "^SHA512$")
+ 	    SET(ALGID "CALG_SHA_512")
+-	ENDIF ("${HASH}" MATCHES "^SHA512$")
++	ENDIF ("${CRYPTO}" MATCHES "^SHA512$")
+ 
+-	SET(SOURCE "#define ${hash}_COMPILE_TEST
++	SET(SOURCE "#define ${crypto}_COMPILE_TEST
+ #define _WIN32_WINNT ${_WIN32_WINNT}
+ #define WINVER ${WINVER}
+ #include <windows.h>
+@@ -438,45 +441,34 @@ main(int argc, char **argv)
+ 	return ${ALGID};
+ }
+ ")
+-	SET(SOURCE_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/check_hash_win.c")
++	SET(SOURCE_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/check_crypto_win.c")
+ 
+ 	FILE(WRITE "${SOURCE_FILE}" "${SOURCE}")
+-	MESSAGE(STATUS "Checking support for ARCHIVE_HASH_${HASH}_WIN")
++	MESSAGE(STATUS "Checking support for ARCHIVE_CRYPTO_${CRYPTO}_WIN")
+ 
+-	TRY_COMPILE(ARCHIVE_HASH_${HASH}_WIN
++	TRY_COMPILE(ARCHIVE_CRYPTO_${CRYPTO}_WIN
+ 	  ${CMAKE_BINARY_DIR}
+ 	  ${SOURCE_FILE}
+ 	  CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${CMAKE_CURRENT_SOURCE_DIR}/libarchive"
+ 	  OUTPUT_VARIABLE OUTPUT)
+ 
+-	IF (ARCHIVE_HASH_${HASH}_WIN)
++	IF (ARCHIVE_CRYPTO_${CRYPTO}_WIN)
+ 	    MESSAGE(STATUS
+-	        "Checking support for ARCHIVE_HASH_${HASH}_WIN -- found")
+-	ELSE (ARCHIVE_HASH_${HASH}_WIN)
++	        "Checking support for ARCHIVE_CRYPTO_${CRYPTO}_WIN -- found")
++	ELSE (ARCHIVE_CRYPTO_${CRYPTO}_WIN)
+ 	    MESSAGE(STATUS
+-	         "Checking support for ARCHIVE_HASH_${HASH}_WIN -- not found")
++	         "Checking support for ARCHIVE_CRYPTO_${CRYPTO}_WIN -- not found")
+     	    FILE(APPEND
+ 	        ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
+-                "Checking support for ARCHIVE_HASH_${HASH}_WIN failed with the following output:\n"
++                "Checking support for ARCHIVE_CRYPTO_${CRYPTO}_WIN failed with the following output:\n"
+         	"${OUTPUT}\n"
+         	"Source file was:\n${SOURCE}\n")
+-	ENDIF (ARCHIVE_HASH_${HASH}_WIN)
++	ENDIF (ARCHIVE_CRYPTO_${CRYPTO}_WIN)
+ 
+-      ENDIF(NOT DEFINED ARCHIVE_HASH_${HASH}_WIN)
+-    ENDFOREACH(HASH)
++      ENDIF(NOT DEFINED ARCHIVE_CRYPTO_${CRYPTO}_WIN)
++    ENDFOREACH(CRYPTO)
+   ENDIF(WIN32 AND NOT CYGWIN)
+-ENDMACRO(CHECK_HASH_WIN HASH_LIST)
+-
+-#
+-# Check MD5/RMD160/SHA support
+-#
+-CHECK_MD(MD5 "LIBC;LIBSYSTEM;OPENSSL")
+-CHECK_MD(RMD160 "LIBC;OPENSSL")
+-CHECK_MD(SHA1 "LIBC;LIBSYSTEM;OPENSSL")
+-CHECK_MD(SHA256 "LIBC;LIBC2;LIBC3;LIBSYSTEM;OPENSSL")
+-CHECK_MD(SHA384 "LIBC;LIBC2;LIBC3;LIBSYSTEM;OPENSSL")
+-CHECK_MD(SHA512 "LIBC;LIBC2;LIBC3;LIBSYSTEM;OPENSSL")
+-CHECK_HASH_WIN("MD5;SHA1;SHA256;SHA384;SHA512")
++ENDMACRO(CHECK_CRYPTO_WIN CRYPTO_LIST)
+ 
+ #
+ # Find iconv
+@@ -1038,6 +1030,18 @@ ELSE(ENABLE_ACL)
+   SET(HAVE_ACL_USER FALSE)
+ ENDIF(ENABLE_ACL)
+ 
++#
++# Check MD5/RMD160/SHA support
++# NOTE: Crypto checks must be run last before generating config.h
++#
++CHECK_CRYPTO(MD5 "LIBC;LIBSYSTEM;OPENSSL")
++CHECK_CRYPTO(RMD160 "LIBC;OPENSSL")
++CHECK_CRYPTO(SHA1 "LIBC;LIBSYSTEM;OPENSSL")
++CHECK_CRYPTO(SHA256 "LIBC;LIBC2;LIBC3;LIBSYSTEM;OPENSSL")
++CHECK_CRYPTO(SHA384 "LIBC;LIBC2;LIBC3;LIBSYSTEM;OPENSSL")
++CHECK_CRYPTO(SHA512 "LIBC;LIBC2;LIBC3;LIBSYSTEM;OPENSSL")
++CHECK_CRYPTO_WIN("MD5;SHA1;SHA256;SHA384;SHA512")
++
+ # Generate "config.h" from "build/cmake/config.h.in"
+ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/config.h.in
+ 	${CMAKE_CURRENT_BINARY_DIR}/config.h)
+diff --git a/Makefile.am b/Makefile.am
+index e814835..bef4837 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -89,6 +89,8 @@ libarchive_la_SOURCES=						\
+ 	libarchive/archive_acl_private.h			\
+ 	libarchive/archive_check_magic.c			\
+ 	libarchive/archive_crc32.h				\
++	libarchive/archive_crypto.c				\
++	libarchive/archive_crypto_private.h			\
+ 	libarchive/archive_endian.h				\
+ 	libarchive/archive_entry.c				\
+ 	libarchive/archive_entry.h				\
+@@ -100,7 +102,6 @@ libarchive_la_SOURCES=						\
+ 	libarchive/archive_entry_stat.c				\
+ 	libarchive/archive_entry_strmode.c			\
+ 	libarchive/archive_entry_xattr.c			\
+-	libarchive/archive_hash.h				\
+ 	libarchive/archive_options.c				\
+ 	libarchive/archive_options_private.h			\
+ 	libarchive/archive_platform.h				\
+@@ -250,6 +251,7 @@ libarchive_test_SOURCES=					\
+ 	libarchive/test/test_acl_posix1e.c			\
+ 	libarchive/test/test_archive_api_feature.c		\
+ 	libarchive/test/test_archive_clear_error.c		\
++	libarchive/test/test_archive_crypto.c			\
+ 	libarchive/test/test_archive_read_close_twice.c		\
+ 	libarchive/test/test_archive_read_close_twice_open_fd.c	\
+ 	libarchive/test/test_archive_read_close_twice_open_filename.c	\
+diff --git a/configure.ac b/configure.ac
+index 78795c2..24ea220 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -290,69 +290,6 @@ if test "x$ac_cv_header_libxml_xmlreader_h" != "xyes"; then
+   fi
+ fi
+ 
+-AC_DEFUN([MD_CHECK], [
+-  if test "$found_$1" != yes; then
+-    saved_LIBS="$LIBS"
+-    saved_CPPFLAGS="$CPPFLAGS"
+-    CPPFLAGS="$CPPFLAGS -I$srcdir/libarchive"
+-    LIBS="$LIBS $4"
+-    AC_MSG_CHECKING([support for ARCHIVE_HASH_$1_$2])
+-    AC_LINK_IFELSE([AC_LANG_SOURCE([
+-#define $1_COMPILE_TEST
+-#define ARCHIVE_HASH_$1_$2
+-#define __LIBARCHIVE_BUILD
+-#include "archive_hash.h"
+-
+-int
+-main(int argc, char **argv)
+-{
+-	archive_$3_ctx ctx;
+-
+-	archive_$3_init(&ctx);
+-	archive_$3_update(&ctx, *argv, argc);
+-	archive_$3_final(&ctx, *argv);
+-	return 0;
+-}
+-])],
+-    [ AC_MSG_RESULT([yes])
+-      found_$1=yes
+-      mdLIBS="$mdLIBS $4"
+-      AC_DEFINE(ARCHIVE_HASH_$1_$2, 1, [ $1 via ARCHIVE_HASH_$1_$2 supported.])
+-    ],
+-    [ AC_MSG_RESULT([no])])
+-    LIBS="$saved_LIBS"
+-    CPPFLAGS="$saved_CPPFLAGS"
+-  fi
+-])
+-
+-MD_CHECK(MD5, LIBC, md5)
+-MD_CHECK(MD5, LIBSYSTEM, md5)
+-MD_CHECK(RMD160, LIBC, rmd160)
+-MD_CHECK(SHA1, LIBC, sha1)
+-MD_CHECK(SHA1, LIBSYSTEM, sha1)
+-MD_CHECK(SHA256, LIBC, sha256)
+-MD_CHECK(SHA256, LIBC2, sha256)
+-MD_CHECK(SHA256, LIBC3, sha256)
+-MD_CHECK(SHA256, LIBSYSTEM, sha256)
+-MD_CHECK(SHA384, LIBC, sha384)
+-MD_CHECK(SHA384, LIBC2, sha384)
+-MD_CHECK(SHA384, LIBC3, sha384)
+-MD_CHECK(SHA384, LIBSYSTEM, sha384)
+-MD_CHECK(SHA512, LIBC, sha512)
+-MD_CHECK(SHA512, LIBC2, sha512)
+-MD_CHECK(SHA512, LIBC3, sha512)
+-MD_CHECK(SHA512, LIBSYSTEM, sha512)
+-
+-if test "x$with_openssl" != "xno"; then
+-    MD_CHECK(MD5, OPENSSL, md5, -lcrypto)
+-    MD_CHECK(RMD160, OPENSSL, rmd160, -lcrypto)
+-    MD_CHECK(SHA1, OPENSSL, sha1, -lcrypto)
+-    MD_CHECK(SHA256, OPENSSL, sha256, -lcrypto)
+-    MD_CHECK(SHA384, OPENSSL, sha384, -lcrypto)
+-    MD_CHECK(SHA512, OPENSSL, sha512, -lcrypto)
+-fi
+-LIBS="$LIBS $mdLIBS"
+-
+ # TODO: Give the user the option of using a pre-existing system
+ # libarchive.  This will define HAVE_LIBARCHIVE which will cause
+ # bsdtar_platform.h to use #include <...> for the libarchive headers.
+@@ -573,4 +510,70 @@ fi
+ # Additional requirements
+ AC_SYS_LARGEFILE
+ 
++dnl NOTE: Crypto checks must run last.
++AC_DEFUN([CRYPTO_CHECK], [
++  if test "$found_$1" != yes; then
++    saved_LIBS="$LIBS"
++    saved_CPPFLAGS="$CPPFLAGS"
++    CPPFLAGS="$CPPFLAGS -I$srcdir -I$srcdir/libarchive"
++    LIBS="$LIBS $4"
++    touch "check_crypto_md.h"
++    AC_MSG_CHECKING([support for ARCHIVE_CRYPTO_$1_$2])
++    AC_LINK_IFELSE([AC_LANG_SOURCE([
++#define ARCHIVE_$1_COMPILE_TEST
++#define ARCHIVE_CRYPTO_$1_$2
++#define PLATFORM_CONFIG_H "check_crypto_md.h"
++
++$(cat "$srcdir/libarchive/archive_crypto.c")
++
++int
++main(int argc, char **argv)
++{
++  archive_$3_ctx ctx;
++  __archive_crypto.$3init(&ctx);
++  __archive_crypto.$3update(&ctx, *argv, argc);
++  __archive_crypto.$3final(&ctx, NULL);
++  return 0;
++}
++])],
++    [ AC_MSG_RESULT([yes])
++      found_$1=yes
++      mdLIBS="$mdLIBS $4"
++      AC_DEFINE(ARCHIVE_CRYPTO_$1_$2, 1, [ $1 via ARCHIVE_CRYPTO_$1_$2 supported.])
++    ],
++    [ AC_MSG_RESULT([no])])
++    LIBS="$saved_LIBS"
++    CPPFLAGS="$saved_CPPFLAGS"
++    rm "check_crypto_md.h"
++  fi
++])
++
++CRYPTO_CHECK(MD5, LIBC, md5)
++CRYPTO_CHECK(MD5, LIBSYSTEM, md5)
++CRYPTO_CHECK(RMD160, LIBC, rmd160)
++CRYPTO_CHECK(SHA1, LIBC, sha1)
++CRYPTO_CHECK(SHA1, LIBSYSTEM, sha1)
++CRYPTO_CHECK(SHA256, LIBC, sha256)
++CRYPTO_CHECK(SHA256, LIBC2, sha256)
++CRYPTO_CHECK(SHA256, LIBC3, sha256)
++CRYPTO_CHECK(SHA256, LIBSYSTEM, sha256)
++CRYPTO_CHECK(SHA384, LIBC, sha384)
++CRYPTO_CHECK(SHA384, LIBC2, sha384)
++CRYPTO_CHECK(SHA384, LIBC3, sha384)
++CRYPTO_CHECK(SHA384, LIBSYSTEM, sha384)
++CRYPTO_CHECK(SHA512, LIBC, sha512)
++CRYPTO_CHECK(SHA512, LIBC2, sha512)
++CRYPTO_CHECK(SHA512, LIBC3, sha512)
++CRYPTO_CHECK(SHA512, LIBSYSTEM, sha512)
++
++if test "x$with_openssl" != "xno"; then
++    CRYPTO_CHECK(MD5, OPENSSL, md5, -lcrypto)
++    CRYPTO_CHECK(RMD160, OPENSSL, rmd160, -lcrypto)
++    CRYPTO_CHECK(SHA1, OPENSSL, sha1, -lcrypto)
++    CRYPTO_CHECK(SHA256, OPENSSL, sha256, -lcrypto)
++    CRYPTO_CHECK(SHA384, OPENSSL, sha384, -lcrypto)
++    CRYPTO_CHECK(SHA512, OPENSSL, sha512, -lcrypto)
++fi
++LIBS="$LIBS $mdLIBS"
++
+ AC_OUTPUT
+diff --git a/libarchive/CMakeLists.txt b/libarchive/CMakeLists.txt
+index 7701547..28ee099 100644
+--- a/libarchive/CMakeLists.txt
++++ b/libarchive/CMakeLists.txt
+@@ -15,6 +15,8 @@ SET(include_HEADERS
+ SET(libarchive_SOURCES
+   archive_acl.c
+   archive_check_magic.c
++  archive_crypto.c
++  archive_crypto_private.h
+   archive_endian.h
+   archive_entry.c
+   archive_entry.h
+@@ -26,7 +28,6 @@ SET(libarchive_SOURCES
+   archive_entry_stat.c
+   archive_entry_strmode.c
+   archive_entry_xattr.c
+-  archive_hash.h
+   archive_options.c
+   archive_options_private.h
+   archive_platform.h
+diff --git a/libarchive/archive_crypto.c b/libarchive/archive_crypto.c
+new file mode 100644
+index 0000000..fd09176
+--- /dev/null
++++ b/libarchive/archive_crypto.c
+@@ -0,0 +1,896 @@
++/*-
++* Copyright (c) 2003-2007 Tim Kientzle
++* Copyright (c) 2011 Andres Mejia
++* All rights reserved.
++*
++* Redistribution and use in source and binary forms, with or without
++* modification, are permitted provided that the following conditions
++* are met:
++* 1. Redistributions of source code must retain the above copyright
++*    notice, this list of conditions and the following disclaimer.
++* 2. Redistributions in binary form must reproduce the above copyright
++*    notice, this list of conditions and the following disclaimer in the
++*    documentation and/or other materials provided with the distribution.
++*
++* THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
++* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++* IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
++* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++* NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++* THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++* THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++*/
++
++#include "archive_platform.h"
++
++#include "archive.h"
++#include "archive_crypto_private.h"
++
++/* MD5 implementations */
++#if defined(ARCHIVE_CRYPTO_MD5_LIBC)
++
++static int
++__archive_libc_md5init(archive_md5_ctx *ctx)
++{
++  MD5Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc_md5update(archive_md5_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  MD5Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc_md5final(archive_md5_ctx *ctx, void *md)
++{
++  MD5Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_MD5_LIBSYSTEM)
++
++static int
++__archive_libsystem_md5init(archive_md5_ctx *ctx)
++{
++  CC_MD5_Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libsystem_md5update(archive_md5_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  CC_MD5_Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libsystem_md5final(archive_md5_ctx *ctx, void *md)
++{
++  CC_MD5_Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_MD5_OPENSSL)
++
++static int
++__archive_openssl_md5init(archive_md5_ctx *ctx)
++{
++  EVP_DigestInit(ctx, EVP_md5());
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_openssl_md5update(archive_md5_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  EVP_DigestUpdate(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_openssl_md5final(archive_md5_ctx *ctx, void *md)
++{
++  /* HACK: archive_write_set_format_xar.c is finalizing empty contexts, so
++   * this is meant to cope with that. Real fix is probably to fix
++   * archive_write_set_format_xar.c
++   */
++  if (ctx->digest)
++    EVP_DigestFinal(ctx, md, NULL);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_MD5_WIN)
++
++static int
++__archive_windowsapi_md5init(archive_md5_ctx *ctx)
++{
++  __la_hash_Init(ctx, CALG_MD5);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_windowsapi_md5update(archive_md5_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  __la_hash_Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_windowsapi_md5final(archive_md5_ctx *ctx, void *md)
++{
++  __la_hash_Final(md, 16, ctx);
++  return (ARCHIVE_OK);
++}
++
++#endif
++
++/* RIPEMD160 implementations */
++#if defined(ARCHIVE_CRYPTO_RMD160_LIBC)
++
++static int
++__archive_libc_ripemd160init(archive_rmd160_ctx *ctx)
++{
++  RMD160Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc_ripemd160update(archive_rmd160_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  RMD160Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc_ripemd160final(archive_rmd160_ctx *ctx, void *md)
++{
++  RMD160Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_RMD160_OPENSSL)
++
++static int
++__archive_openssl_ripemd160init(archive_rmd160_ctx *ctx)
++{
++  EVP_DigestInit(ctx, EVP_ripemd160());
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_openssl_ripemd160update(archive_rmd160_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  EVP_DigestUpdate(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_openssl_ripemd160final(archive_rmd160_ctx *ctx, void *md)
++{
++  EVP_DigestFinal(ctx, md, NULL);
++  return (ARCHIVE_OK);
++}
++
++#endif
++
++/* SHA1 implementations */
++#if defined(ARCHIVE_CRYPTO_SHA1_LIBC)
++
++static int
++__archive_libc_sha1init(archive_sha1_ctx *ctx)
++{
++  SHA1Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc_sha1update(archive_sha1_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  SHA1Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc_sha1final(archive_sha1_ctx *ctx, void *md)
++{
++  SHA1Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA1_LIBSYSTEM)
++
++static int
++__archive_libsystem_sha1init(archive_sha1_ctx *ctx)
++{
++  CC_SHA1_Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libsystem_sha1update(archive_sha1_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  CC_SHA1_Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libsystem_sha1final(archive_sha1_ctx *ctx, void *md)
++{
++  CC_SHA1_Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA1_OPENSSL)
++
++static int
++__archive_openssl_sha1init(archive_sha1_ctx *ctx)
++{
++  EVP_DigestInit(ctx, EVP_sha1());
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_openssl_sha1update(archive_sha1_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  EVP_DigestUpdate(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_openssl_sha1final(archive_sha1_ctx *ctx, void *md)
++{
++  /* HACK: archive_write_set_format_xar.c is finalizing empty contexts, so
++   * this is meant to cope with that. Real fix is probably to fix
++   * archive_write_set_format_xar.c
++   */
++  if (ctx->digest)
++    EVP_DigestFinal(ctx, md, NULL);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA1_WIN)
++
++static int
++__archive_windowsapi_sha1init(archive_sha1_ctx *ctx)
++{
++  __la_hash_Init(ctx, CALG_SHA1);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_windowsapi_sha1update(archive_sha1_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  __la_hash_Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_windowsapi_sha1final(archive_sha1_ctx *ctx, void *md)
++{
++  __la_hash_Final(md, 20, ctx);
++  return (ARCHIVE_OK);
++}
++
++#endif
++
++/* SHA256 implementations */
++#if defined(ARCHIVE_CRYPTO_SHA256_LIBC)
++
++static int
++__archive_libc_sha256init(archive_sha256_ctx *ctx)
++{
++  SHA256_Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc_sha256update(archive_sha256_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  SHA256_Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc_sha256final(archive_sha256_ctx *ctx, void *md)
++{
++  SHA256_Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA256_LIBC2)
++
++static int
++__archive_libc2_sha256init(archive_sha256_ctx *ctx)
++{
++  SHA256Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc2_sha256update(archive_sha256_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  SHA256Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc2_sha256final(archive_sha256_ctx *ctx, void *md)
++{
++  SHA256Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA256_LIBC3)
++
++static int
++__archive_libc3_sha256init(archive_sha256_ctx *ctx)
++{
++  SHA256Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc3_sha256update(archive_sha256_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  SHA256Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc3_sha256final(archive_sha256_ctx *ctx, void *md)
++{
++  SHA256Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA256_LIBSYSTEM)
++
++static int
++__archive_libsystem_sha256init(archive_sha256_ctx *ctx)
++{
++  CC_SHA256_Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libsystem_sha256update(archive_sha256_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  CC_SHA256_Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libsystem_sha256final(archive_sha256_ctx *ctx, void *md)
++{
++  CC_SHA256_Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA256_OPENSSL)
++
++static int
++__archive_openssl_sha256init(archive_sha256_ctx *ctx)
++{
++  EVP_DigestInit(ctx, EVP_sha256());
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_openssl_sha256update(archive_sha256_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  EVP_DigestUpdate(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_openssl_sha256final(archive_sha256_ctx *ctx, void *md)
++{
++  EVP_DigestFinal(ctx, md, NULL);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA256_WIN)
++
++static int
++__archive_windowsapi_sha256init(archive_sha256_ctx *ctx)
++{
++  __la_hash_Init(ctx, CALG_SHA256);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_windowsapi_sha256update(archive_sha256_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  __la_hash_Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_windowsapi_sha256final(archive_sha256_ctx *ctx, void *md)
++{
++  __la_hash_Final(md, 32, ctx);
++  return (ARCHIVE_OK);
++}
++
++#endif
++
++/* SHA384 implementations */
++#if defined(ARCHIVE_CRYPTO_SHA384_LIBC)
++
++static int
++__archive_libc_sha384init(archive_sha384_ctx *ctx)
++{
++  SHA384_Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc_sha384update(archive_sha384_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  SHA384_Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc_sha384final(archive_sha384_ctx *ctx, void *md)
++{
++  SHA384_Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA384_LIBC2)
++
++static int
++__archive_libc2_sha384init(archive_sha384_ctx *ctx)
++{
++  SHA384Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc2_sha384update(archive_sha384_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  SHA384Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc2_sha384final(archive_sha384_ctx *ctx, void *md)
++{
++  SHA384Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA384_LIBC3)
++
++static int
++__archive_libc3_sha384init(archive_sha384_ctx *ctx)
++{
++  SHA384Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc3_sha384update(archive_sha384_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  SHA384Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc3_sha384final(archive_sha384_ctx *ctx, void *md)
++{
++  SHA384Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA384_LIBSYSTEM)
++
++static int
++__archive_libsystem_sha384init(archive_sha384_ctx *ctx)
++{
++  CC_SHA384_Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libsystem_sha384update(archive_sha384_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  CC_SHA384_Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libsystem_sha384final(archive_sha384_ctx *ctx, void *md)
++{
++  CC_SHA384_Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA384_OPENSSL)
++
++static int
++__archive_openssl_sha384init(archive_sha384_ctx *ctx)
++{
++  EVP_DigestInit(ctx, EVP_sha384());
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_openssl_sha384update(archive_sha384_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  EVP_DigestUpdate(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_openssl_sha384final(archive_sha384_ctx *ctx, void *md)
++{
++  EVP_DigestFinal(ctx, md, NULL);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA384_WIN)
++
++static int
++__archive_windowsapi_sha384init(archive_sha384_ctx *ctx)
++{
++  __la_hash_Init(ctx, CALG_SHA384);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_windowsapi_sha384update(archive_sha384_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  __la_hash_Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_windowsapi_sha384final(archive_sha384_ctx *ctx, void *md)
++{
++  __la_hash_Final(md, 48, ctx);
++  return (ARCHIVE_OK);
++}
++
++#endif
++
++/* SHA512 implementations */
++#if defined(ARCHIVE_CRYPTO_SHA512_LIBC)
++
++static int
++__archive_libc_sha512init(archive_sha512_ctx *ctx)
++{
++  SHA512_Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc_sha512update(archive_sha512_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  SHA512_Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc_sha512final(archive_sha512_ctx *ctx, void *md)
++{
++  SHA512_Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA512_LIBC2)
++
++static int
++__archive_libc2_sha512init(archive_sha512_ctx *ctx)
++{
++  SHA512Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc2_sha512update(archive_sha512_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  SHA512Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc2_sha512final(archive_sha512_ctx *ctx, void *md)
++{
++  SHA512Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA512_LIBC3)
++
++static int
++__archive_libc3_sha512init(archive_sha512_ctx *ctx)
++{
++  SHA512Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc3_sha512update(archive_sha512_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  SHA512Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libc3_sha512final(archive_sha512_ctx *ctx, void *md)
++{
++  SHA512Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA512_LIBSYSTEM)
++
++static int
++__archive_libsystem_sha512init(archive_sha512_ctx *ctx)
++{
++  CC_SHA512_Init(ctx);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libsystem_sha512update(archive_sha512_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  CC_SHA512_Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_libsystem_sha512final(archive_sha512_ctx *ctx, void *md)
++{
++  CC_SHA512_Final(md, ctx);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA512_OPENSSL)
++
++static int
++__archive_openssl_sha512init(archive_sha512_ctx *ctx)
++{
++  EVP_DigestInit(ctx, EVP_sha512());
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_openssl_sha512update(archive_sha512_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  EVP_DigestUpdate(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_openssl_sha512final(archive_sha512_ctx *ctx, void *md)
++{
++  EVP_DigestFinal(ctx, md, NULL);
++  return (ARCHIVE_OK);
++}
++
++#elif defined(ARCHIVE_CRYPTO_SHA512_WIN)
++
++static int
++__archive_windowsapi_sha512init(archive_sha512_ctx *ctx)
++{
++  __la_hash_Init(ctx, CALG_SHA512);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_windowsapi_sha512update(archive_sha512_ctx *ctx, const void *indata,
++    size_t insize)
++{
++  __la_hash_Update(ctx, indata, insize);
++  return (ARCHIVE_OK);
++}
++
++static int
++__archive_windowsapi_sha512final(archive_sha512_ctx *ctx, void *md)
++{
++  __la_hash_Final(md, 64, ctx);
++  return (ARCHIVE_OK);
++}
++
++#endif
++
++/* NOTE: Crypto functions are set based on availability and by the following
++ * order of preference.
++ * 1. libc
++ * 2. libc2
++ * 3. libc3
++ * 4. libSystem
++ * 5. OpenSSL
++ * 6. Windows API
++ */
++const struct archive_crypto __archive_crypto =
++{
++/* MD5 */
++#if defined(ARCHIVE_CRYPTO_MD5_LIBC)
++  &__archive_libc_md5init,
++  &__archive_libc_md5update,
++  &__archive_libc_md5final,
++#elif defined(ARCHIVE_CRYPTO_MD5_LIBSYSTEM)
++  &__archive_libsystem_md5init,
++  &__archive_libsystem_md5update,
++  &__archive_libsystem_md5final,
++#elif defined(ARCHIVE_CRYPTO_MD5_OPENSSL)
++  &__archive_openssl_md5init,
++  &__archive_openssl_md5update,
++  &__archive_openssl_md5final,
++#elif defined(ARCHIVE_CRYPTO_MD5_WIN)
++  &__archive_windowsapi_md5init,
++  &__archive_windowsapi_md5update,
++  &__archive_windowsapi_md5final,
++#elif !defined(ARCHIVE_MD5_COMPILE_TEST)
++  NULL,
++  NULL,
++  NULL,
++#endif
++
++/* RIPEMD160 */
++#if defined(ARCHIVE_CRYPTO_RMD160_LIBC)
++  &__archive_libc_ripemd160init,
++  &__archive_libc_ripemd160update,
++  &__archive_libc_ripemd160final,
++#elif defined(ARCHIVE_CRYPTO_RMD160_OPENSSL)
++  &__archive_openssl_ripemd160init,
++  &__archive_openssl_ripemd160update,
++  &__archive_openssl_ripemd160final,
++#elif !defined(ARCHIVE_RMD160_COMPILE_TEST)
++  NULL,
++  NULL,
++  NULL,
++#endif
++
++/* SHA1 */
++#if defined(ARCHIVE_CRYPTO_SHA1_LIBC)
++  &__archive_libc_sha1init,
++  &__archive_libc_sha1update,
++  &__archive_libc_sha1final,
++#elif defined(ARCHIVE_CRYPTO_SHA1_LIBSYSTEM)
++  &__archive_libsystem_sha1init,
++  &__archive_libsystem_sha1update,
++  &__archive_libsystem_sha1final,
++#elif defined(ARCHIVE_CRYPTO_SHA1_OPENSSL)
++  &__archive_openssl_sha1init,
++  &__archive_openssl_sha1update,
++  &__archive_openssl_sha1final,
++#elif defined(ARCHIVE_CRYPTO_SHA1_WIN)
++  &__archive_windowsapi_sha1init,
++  &__archive_windowsapi_sha1update,
++  &__archive_windowsapi_sha1final,
++#elif !defined(ARCHIVE_SHA1_COMPILE_TEST)
++  NULL,
++  NULL,
++  NULL,
++#endif
++
++/* SHA256 */
++#if defined(ARCHIVE_CRYPTO_SHA256_LIBC)
++  &__archive_libc_sha256init,
++  &__archive_libc_sha256update,
++  &__archive_libc_sha256final,
++#elif defined(ARCHIVE_CRYPTO_SHA256_LIBC2)
++  &__archive_libc2_sha256init,
++  &__archive_libc2_sha256update,
++  &__archive_libc2_sha256final,
++#elif defined(ARCHIVE_CRYPTO_SHA256_LIBC3)
++  &__archive_libc3_sha256init,
++  &__archive_libc3_sha256update,
++  &__archive_libc3_sha256final,
++#elif defined(ARCHIVE_CRYPTO_SHA256_LIBSYSTEM)
++  &__archive_libsystem_sha256init,
++  &__archive_libsystem_sha256update,
++  &__archive_libsystem_sha256final,
++#elif defined(ARCHIVE_CRYPTO_SHA256_OPENSSL)
++  &__archive_openssl_sha256init,
++  &__archive_openssl_sha256update,
++  &__archive_openssl_sha256final,
++#elif defined(ARCHIVE_CRYPTO_SHA256_WIN)
++  &__archive_windowsapi_sha256init,
++  &__archive_windowsapi_sha256update,
++  &__archive_windowsapi_sha256final,
++#elif !defined(ARCHIVE_SHA256_COMPILE_TEST)
++  NULL,
++  NULL,
++  NULL,
++#endif
++
++/* SHA384 */
++#if defined(ARCHIVE_CRYPTO_SHA384_LIBC)
++  &__archive_libc_sha384init,
++  &__archive_libc_sha384update,
++  &__archive_libc_sha384final,
++#elif defined(ARCHIVE_CRYPTO_SHA384_LIBC2)
++  &__archive_libc2_sha384init,
++  &__archive_libc2_sha384update,
++  &__archive_libc2_sha384final,
++#elif defined(ARCHIVE_CRYPTO_SHA384_LIBC3)
++  &__archive_libc3_sha384init,
++  &__archive_libc3_sha384update,
++  &__archive_libc3_sha384final,
++#elif defined(ARCHIVE_CRYPTO_SHA384_LIBSYSTEM)
++  &__archive_libsystem_sha384init,
++  &__archive_libsystem_sha384update,
++  &__archive_libsystem_sha384final,
++#elif defined(ARCHIVE_CRYPTO_SHA384_OPENSSL)
++  &__archive_openssl_sha384init,
++  &__archive_openssl_sha384update,
++  &__archive_openssl_sha384final,
++#elif defined(ARCHIVE_CRYPTO_SHA384_WIN)
++  &__archive_windowsapi_sha384init,
++  &__archive_windowsapi_sha384update,
++  &__archive_windowsapi_sha384final,
++#elif !defined(ARCHIVE_SHA384_COMPILE_TEST)
++  NULL,
++  NULL,
++  NULL,
++#endif
++
++/* SHA512 */
++#if defined(ARCHIVE_CRYPTO_SHA512_LIBC)
++  &__archive_libc_sha512init,
++  &__archive_libc_sha512update,
++  &__archive_libc_sha512final
++#elif defined(ARCHIVE_CRYPTO_SHA512_LIBC2)
++  &__archive_libc2_sha512init,
++  &__archive_libc2_sha512update,
++  &__archive_libc2_sha512final
++#elif defined(ARCHIVE_CRYPTO_SHA512_LIBC3)
++  &__archive_libc3_sha512init,
++  &__archive_libc3_sha512update,
++  &__archive_libc3_sha512final
++#elif defined(ARCHIVE_CRYPTO_SHA512_LIBSYSTEM)
++  &__archive_libsystem_sha512init,
++  &__archive_libsystem_sha512update,
++  &__archive_libsystem_sha512final
++#elif defined(ARCHIVE_CRYPTO_SHA512_OPENSSL)
++  &__archive_openssl_sha512init,
++  &__archive_openssl_sha512update,
++  &__archive_openssl_sha512final
++#elif defined(ARCHIVE_CRYPTO_SHA512_WIN)
++  &__archive_windowsapi_sha512init,
++  &__archive_windowsapi_sha512update,
++  &__archive_windowsapi_sha512final
++#elif !defined(ARCHIVE_SHA512_COMPILE_TEST)
++  NULL,
++  NULL,
++  NULL
++#endif
++};
+diff --git a/libarchive/archive_crypto_private.h b/libarchive/archive_crypto_private.h
+new file mode 100644
+index 0000000..aca1e26
+--- /dev/null
++++ b/libarchive/archive_crypto_private.h
+@@ -0,0 +1,306 @@
++/*-
++* Copyright (c) 2003-2007 Tim Kientzle
++* Copyright (c) 2011 Andres Mejia
++* All rights reserved.
++*
++* Redistribution and use in source and binary forms, with or without
++* modification, are permitted provided that the following conditions
++* are met:
++* 1. Redistributions of source code must retain the above copyright
++*    notice, this list of conditions and the following disclaimer.
++* 2. Redistributions in binary form must reproduce the above copyright
++*    notice, this list of conditions and the following disclaimer in the
++*    documentation and/or other materials provided with the distribution.
++*
++* THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
++* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++* IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
++* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++* NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++* THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++* THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++*/
++
++#ifndef __LIBARCHIVE_BUILD
++#error This header is only to be used internally to libarchive.
++#endif
++
++#ifndef ARCHIVE_CRYPTO_PRIVATE_H_INCLUDED
++#define ARCHIVE_CRYPTO_PRIVATE_H_INCLUDED
++
++/*
++ * Crypto support in various Operating Systems:
++ *
++ * NetBSD:
++ * - MD5 and SHA1 in libc: without _ after algorithm name
++ * - SHA2 in libc: with _ after algorithm name
++ *
++ * OpenBSD:
++ * - MD5, SHA1 and SHA2 in libc: without _ after algorithm name
++ * - OpenBSD 4.4 and earlier have SHA2 in libc with _ after algorithm name
++ *
++ * DragonFly and FreeBSD (XXX not used yet):
++ * - MD5 and SHA1 in libmd: without _ after algorithm name
++ * - SHA256: with _ after algorithm name
++ *
++ * Mac OS X (10.4 and later):
++ * - MD5, SHA1 and SHA2 in libSystem: with CC_ prefix and _ after algorithm name
++ *
++ * OpenSSL:
++ * - MD5, SHA1 and SHA2 in libcrypto: with _ after algorithm name
++ *
++ * Windows:
++ * - MD5, SHA1 and SHA2 in archive_windows.c: without algorithm name
++ *   and with __la_ prefix.
++ */
++
++/* libc crypto headers */
++#if defined(ARCHIVE_CRYPTO_MD5_LIBC)
++#include <md5.h>
++#endif
++#if defined(ARCHIVE_CRYPTO_RMD160_LIBC)
++#include <rmd160.h>
++#endif
++#if defined(ARCHIVE_CRYPTO_SHA1_LIBC)
++#include <sha1.h>
++#endif
++#if defined(ARCHIVE_CRYPTO_SHA256_LIBC) ||\
++  defined(ARCHIVE_CRYPTO_SHA256_LIBC2) ||\
++  defined(ARCHIVE_CRYPTO_SHA256_LIBC3) ||\
++  defined(ARCHIVE_CRYPTO_SHA384_LIBC) ||\
++  defined(ARCHIVE_CRYPTO_SHA384_LIBC2) ||\
++  defined(ARCHIVE_CRYPTO_SHA384_LIBC3) ||\
++  defined(ARCHIVE_CRYPTO_SHA512_LIBC) ||\
++  defined(ARCHIVE_CRYPTO_SHA512_LIBC2) ||\
++  defined(ARCHIVE_CRYPTO_SHA512_LIBC3)
++#include <sha2.h>
++#endif
++
++/* libSystem crypto headers */
++#if defined(ARCHIVE_CRYPTO_MD5_LIBSYSTEM) ||\
++  defined(ARCHIVE_CRYPTO_SHA1_LIBSYSTEM) ||\
++  defined(ARCHIVE_CRYPTO_SHA256_LIBSYSTEM) ||\
++  defined(ARCHIVE_CRYPTO_SHA384_LIBSYSTEM) ||\
++  defined(ARCHIVE_CRYPTO_SHA512_LIBSYSTEM)
++#include <CommonCrypto/CommonDigest.h>
++#endif
++
++/* OpenSSL crypto headers */
++#if defined(ARCHIVE_CRYPTO_MD5_OPENSSL) ||\
++  defined(ARCHIVE_CRYPTO_RMD160_OPENSSL) ||\
++  defined(ARCHIVE_CRYPTO_SHA1_OPENSSL) ||\
++  defined(ARCHIVE_CRYPTO_SHA256_OPENSSL) ||\
++  defined(ARCHIVE_CRYPTO_SHA384_OPENSSL) ||\
++  defined(ARCHIVE_CRYPTO_SHA512_OPENSSL)
++#include <openssl/evp.h>
++#endif
++
++/* Windows crypto headers */
++#if defined(ARCHIVE_CRYPTO_MD5_WIN)    ||\
++      defined(ARCHIVE_CRYPTO_SHA1_WIN)   || defined(ARCHIVE_CRYPTO_SHA256_WIN) ||\
++      defined(ARCHIVE_CRYPTO_SHA384_WIN) || defined(ARCHIVE_CRYPTO_SHA512_WIN)
++#include <wincrypt.h>
++typedef struct {
++  int   valid;
++  HCRYPTPROV  cryptProv;
++  HCRYPTHASH  hash;
++} Digest_CTX;
++extern void __la_hash_Init(Digest_CTX *, ALG_ID);
++extern void __la_hash_Final(unsigned char *, size_t, Digest_CTX *);
++extern void __la_hash_Update(Digest_CTX *, const unsigned char *, size_t);
++#endif
++
++/* typedefs */
++#if defined(ARCHIVE_CRYPTO_MD5_LIBC)
++typedef MD5_CTX archive_md5_ctx;
++#elif defined(ARCHIVE_CRYPTO_MD5_LIBSYSTEM)
++typedef CC_MD5_CTX archive_md5_ctx;
++#elif defined(ARCHIVE_CRYPTO_MD5_OPENSSL)
++typedef EVP_MD_CTX archive_md5_ctx;
++#elif defined(ARCHIVE_CRYPTO_MD5_WIN)
++typedef Digest_CTX archive_md5_ctx;
++#else
++typedef unsigned char archive_md5_ctx;
++#endif
++
++#if defined(ARCHIVE_CRYPTO_RMD160_LIBC)
++typedef RMD160_CTX archive_rmd160_ctx;
++#elif defined(ARCHIVE_CRYPTO_RMD160_OPENSSL)
++typedef EVP_MD_CTX archive_rmd160_ctx;
++#else
++typedef unsigned char archive_rmd160_ctx;
++#endif
++
++#if defined(ARCHIVE_CRYPTO_SHA1_LIBC)
++typedef SHA1_CTX archive_sha1_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA1_LIBSYSTEM)
++typedef CC_SHA1_CTX archive_sha1_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA1_OPENSSL)
++typedef EVP_MD_CTX archive_sha1_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA1_WIN)
++typedef Digest_CTX archive_sha1_ctx;
++#else
++typedef unsigned char archive_sha1_ctx;
++#endif
++
++#if defined(ARCHIVE_CRYPTO_SHA256_LIBC)
++typedef SHA256_CTX archive_sha256_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA256_LIBC2)
++typedef SHA256_CTX archive_sha256_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA256_LIBC3)
++typedef SHA2_CTX archive_sha256_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA256_LIBSYSTEM)
++typedef CC_SHA256_CTX archive_shs256_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA256_OPENSSL)
++typedef EVP_MD_CTX archive_sha256_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA256_WIN)
++typedef Digest_CTX archive_sha256_ctx;
++#else
++typedef unsigned char archive_sha256_ctx;
++#endif
++
++#if defined(ARCHIVE_CRYPTO_SHA384_LIBC)
++typedef SHA384_CTX archive_sha384_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA384_LIBC2)
++typedef SHA384_CTX archive_sha384_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA384_LIBC3)
++typedef SHA2_CTX archive_sha384_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA384_LIBSYSTEM)
++typedef CC_SHA512_CTX archive_shs384_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA384_OPENSSL)
++typedef EVP_MD_CTX archive_sha384_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA384_WIN)
++typedef Digest_CTX archive_sha384_ctx;
++#else
++typedef unsigned char archive_sha384_ctx;
++#endif
++
++#if defined(ARCHIVE_CRYPTO_SHA512_LIBC)
++typedef SHA512_CTX archive_sha512_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA512_LIBC2)
++typedef SHA512_CTX archive_sha512_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA512_LIBC3)
++typedef SHA2_CTX archive_sha512_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA512_LIBSYSTEM)
++typedef CC_SHA512_CTX archive_shs512_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA512_OPENSSL)
++typedef EVP_MD_CTX archive_sha512_ctx;
++#elif defined(ARCHIVE_CRYPTO_SHA512_WIN)
++typedef Digest_CTX archive_sha512_ctx;
++#else
++typedef unsigned char archive_sha512_ctx;
++#endif
++
++/* defines */
++#if defined(ARCHIVE_CRYPTO_MD5_LIBC) ||\
++  defined(ARCHIVE_CRYPTO_MD5_LIBSYSTEM) ||\
++  defined(ARCHIVE_CRYPTO_MD5_OPENSSL) ||\
++  defined(ARCHIVE_CRYPTO_MD5_WIN)
++#define ARCHIVE_HAS_MD5
++#define archive_md5_init(ctx)\
++  __archive_crypto.md5init(ctx)
++#define archive_md5_final(ctx, md)\
++  __archive_crypto.md5final(ctx, md)
++#define archive_md5_update(ctx, buf, n)\
++  __archive_crypto.md5update(ctx, buf, n)
++#endif
++
++#if defined(ARCHIVE_CRYPTO_RMD160_LIBC) ||\
++  defined(ARCHIVE_CRYPTO_RMD160_OPENSSL)
++#define ARCHIVE_HAS_RMD160
++#define archive_rmd160_init(ctx)\
++  __archive_crypto.rmd160init(ctx)
++#define archive_rmd160_final(ctx, md)\
++  __archive_crypto.rmd160final(ctx, md)
++#define archive_rmd160_update(ctx, buf, n)\
++  __archive_crypto.rmd160update(ctx, buf, n)
++#endif
++
++#if defined(ARCHIVE_CRYPTO_SHA1_LIBC) ||\
++  defined(ARCHIVE_CRYPTO_SHA1_LIBSYSTEM) ||\
++  defined(ARCHIVE_CRYPTO_SHA1_OPENSSL) ||\
++  defined(ARCHIVE_CRYPTO_SHA1_WIN)
++#define ARCHIVE_HAS_SHA1
++#define archive_sha1_init(ctx)\
++  __archive_crypto.sha1init(ctx)
++#define archive_sha1_final(ctx, md)\
++  __archive_crypto.sha1final(ctx, md)
++#define archive_sha1_update(ctx, buf, n)\
++  __archive_crypto.sha1update(ctx, buf, n)
++#endif
++
++#if defined(ARCHIVE_CRYPTO_SHA256_LIBC) ||\
++  defined(ARCHIVE_CRYPTO_SHA256_LIBC2) ||\
++  defined(ARCHIVE_CRYPTO_SHA256_LIBC3) ||\
++  defined(ARCHIVE_CRYPTO_SHA256_LIBSYSTEM) ||\
++  defined(ARCHIVE_CRYPTO_SHA256_OPENSSL) ||\
++  defined(ARCHIVE_CRYPTO_SHA256_WIN)
++#define ARCHIVE_HAS_SHA256
++#define archive_sha256_init(ctx)\
++  __archive_crypto.sha256init(ctx)
++#define archive_sha256_final(ctx, md)\
++  __archive_crypto.sha256final(ctx, md)
++#define archive_sha256_update(ctx, buf, n)\
++  __archive_crypto.sha256update(ctx, buf, n)
++#endif
++
++#if defined(ARCHIVE_CRYPTO_SHA384_LIBC) ||\
++  defined(ARCHIVE_CRYPTO_SHA384_LIBC2) ||\
++  defined(ARCHIVE_CRYPTO_SHA384_LIBC3) ||\
++  defined(ARCHIVE_CRYPTO_SHA384_LIBSYSTEM) ||\
++  defined(ARCHIVE_CRYPTO_SHA384_OPENSSL) ||\
++  defined(ARCHIVE_CRYPTO_SHA384_WIN)
++#define ARCHIVE_HAS_SHA384
++#define archive_sha384_init(ctx)\
++  __archive_crypto.sha384init(ctx)
++#define archive_sha384_final(ctx, md)\
++  __archive_crypto.sha384final(ctx, md)
++#define archive_sha384_update(ctx, buf, n)\
++  __archive_crypto.sha384update(ctx, buf, n)
++#endif
++
++#if defined(ARCHIVE_CRYPTO_SHA512_LIBC) ||\
++  defined(ARCHIVE_CRYPTO_SHA512_LIBC2) ||\
++  defined(ARCHIVE_CRYPTO_SHA512_LIBC3) ||\
++  defined(ARCHIVE_CRYPTO_SHA512_LIBSYSTEM) ||\
++  defined(ARCHIVE_CRYPTO_SHA512_OPENSSL) ||\
++  defined(ARCHIVE_CRYPTO_SHA512_WIN)
++#define ARCHIVE_HAS_SHA512
++#define archive_sha512_init(ctx)\
++  __archive_crypto.sha512init(ctx)
++#define archive_sha512_final(ctx, md)\
++  __archive_crypto.sha512final(ctx, md)
++#define archive_sha512_update(ctx, buf, n)\
++  __archive_crypto.sha512update(ctx, buf, n)
++#endif
++
++/* Minimal interface to crypto functionality for internal use in libarchive */
++struct archive_crypto
++{
++  /* Message Digest */
++  int (*md5init)(archive_md5_ctx *ctx);
++  int (*md5update)(archive_md5_ctx *, const void *, size_t);
++  int (*md5final)(archive_md5_ctx *, void *);
++  int (*rmd160init)(archive_rmd160_ctx *);
++  int (*rmd160update)(archive_rmd160_ctx *, const void *, size_t);
++  int (*rmd160final)(archive_rmd160_ctx *, void *);
++  int (*sha1init)(archive_sha1_ctx *);
++  int (*sha1update)(archive_sha1_ctx *, const void *, size_t);
++  int (*sha1final)(archive_sha1_ctx *, void *);
++  int (*sha256init)(archive_sha256_ctx *);
++  int (*sha256update)(archive_sha256_ctx *, const void *, size_t);
++  int (*sha256final)(archive_sha256_ctx *, void *);
++  int (*sha384init)(archive_sha384_ctx *);
++  int (*sha384update)(archive_sha384_ctx *, const void *, size_t);
++  int (*sha384final)(archive_sha384_ctx *, void *);
++  int (*sha512init)(archive_sha512_ctx *);
++  int (*sha512update)(archive_sha512_ctx *, const void *, size_t);
++  int (*sha512final)(archive_sha512_ctx *, void *);
++};
++
++extern const struct archive_crypto __archive_crypto;
++
++#endif
+diff --git a/libarchive/archive_hash.h b/libarchive/archive_hash.h
+deleted file mode 100644
+index b180da6..0000000
+--- a/libarchive/archive_hash.h
++++ /dev/null
+@@ -1,281 +0,0 @@
+-/*-
+- * Copyright (c) 2009 Joerg Sonnenberger
+- * All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions
+- * are met:
+- * 1. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistributions in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- *
+- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+- * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
+- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+- *
+- * $FreeBSD: head/lib/libarchive/archive_hash.h 201171 2009-12-29 06:39:07Z kientzle $
+- */
+-
+-#ifndef __LIBARCHIVE_BUILD
+-#error This header is only to be used internally to libarchive.
+-#endif
+-
+-#ifdef HAVE_SYS_TYPES_H
+-#include <sys/types.h>
+-#endif
+-
+-/*
+- * Hash function support in various Operating Systems:
+- *
+- * NetBSD:
+- * - MD5 and SHA1 in libc: without _ after algorithm name
+- * - SHA2 in libc: with _ after algorithm name
+- *
+- * OpenBSD:
+- * - MD5, SHA1 and SHA2 in libc: without _ after algorithm name
+- * - OpenBSD 4.4 and earlier have SHA2 in libc with _ after algorithm name
+- *
+- * DragonFly and FreeBSD (XXX not used yet):
+- * - MD5 and SHA1 in libmd: without _ after algorithm name
+- * - SHA256: with _ after algorithm name
+- *
+- * Mac OS X (10.4 and later):
+- * - MD5, SHA1 and SHA2 in libSystem: with CC_ prefix and _ after algorithm name
+- *
+- * OpenSSL:
+- * - MD5, SHA1 and SHA2 in libcrypto: with _ after algorithm name
+- *
+- * Windows:
+- * - MD5, SHA1 and SHA2 in archive_windows.c: without algorithm name
+- *   and with __la_ prefix.
+- */
+-#if defined(ARCHIVE_HASH_MD5_WIN)    ||\
+-      defined(ARCHIVE_HASH_SHA1_WIN)   || defined(ARCHIVE_HASH_SHA256_WIN) ||\
+-      defined(ARCHIVE_HASH_SHA384_WIN) || defined(ARCHIVE_HASH_SHA512_WIN)
+-#include <wincrypt.h>
+-typedef struct {
+-	int		valid;
+-	HCRYPTPROV	cryptProv;
+-	HCRYPTHASH	hash;
+-} Digest_CTX;
+-extern void __la_hash_Init(Digest_CTX *, ALG_ID);
+-extern void __la_hash_Final(unsigned char *, size_t, Digest_CTX *);
+-extern void __la_hash_Update(Digest_CTX *, const unsigned char *, size_t);
+-#endif
+-
+-#if defined(ARCHIVE_HASH_MD5_LIBC)
+-#  include <md5.h>
+-#  define ARCHIVE_HAS_MD5
+-typedef MD5_CTX archive_md5_ctx;
+-#  define archive_md5_init(ctx)			MD5Init(ctx)
+-#  define archive_md5_final(ctx, buf)		MD5Final(buf, ctx)
+-#  define archive_md5_update(ctx, buf, n)	MD5Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_MD5_LIBSYSTEM)
+-#  include <CommonCrypto/CommonDigest.h>
+-#  define ARCHIVE_HAS_MD5
+-typedef CC_MD5_CTX archive_md5_ctx;
+-#  define archive_md5_init(ctx)			CC_MD5_Init(ctx)
+-#  define archive_md5_final(ctx, buf)		CC_MD5_Final(buf, ctx)
+-#  define archive_md5_update(ctx, buf, n)	CC_MD5_Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_MD5_OPENSSL)
+-#  include <openssl/md5.h>
+-#  define ARCHIVE_HAS_MD5
+-typedef MD5_CTX archive_md5_ctx;
+-#  define archive_md5_init(ctx)			MD5_Init(ctx)
+-#  define archive_md5_final(ctx, buf)		MD5_Final(buf, ctx)
+-#  define archive_md5_update(ctx, buf, n)	MD5_Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_MD5_WIN)
+-#  define ARCHIVE_HAS_MD5
+-#  define MD5_DIGEST_LENGTH	16
+-typedef Digest_CTX archive_md5_ctx;
+-#  define archive_md5_init(ctx)			__la_hash_Init(ctx, CALG_MD5)
+-#  define archive_md5_final(ctx, buf)		__la_hash_Final(buf, MD5_DIGEST_LENGTH, ctx)
+-#  define archive_md5_update(ctx, buf, n)	__la_hash_Update(ctx, buf, n)
+-#endif
+-
+-#if defined(ARCHIVE_HASH_RMD160_LIBC)
+-#  include <rmd160.h>
+-#  define ARCHIVE_HAS_RMD160
+-typedef RMD160_CTX archive_rmd160_ctx;
+-#  define archive_rmd160_init(ctx)		RMD160Init(ctx)
+-#  define archive_rmd160_final(ctx, buf)	RMD160Final(buf, ctx)
+-#  define archive_rmd160_update(ctx, buf, n)	RMD160Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_RMD160_OPENSSL)
+-#  include <openssl/ripemd.h>
+-#  define ARCHIVE_HAS_RMD160
+-typedef RIPEMD160_CTX archive_rmd160_ctx;
+-#  define archive_rmd160_init(ctx)		RIPEMD160_Init(ctx)
+-#  define archive_rmd160_final(ctx, buf)	RIPEMD160_Final(buf, ctx)
+-#  define archive_rmd160_update(ctx, buf, n)	RIPEMD160_Update(ctx, buf, n)
+-#endif
+-
+-#if defined(ARCHIVE_HASH_SHA1_LIBC)
+-#  include <sha1.h>
+-#  define ARCHIVE_HAS_SHA1
+-typedef SHA1_CTX archive_sha1_ctx;
+-#  define archive_sha1_init(ctx)		SHA1Init(ctx)
+-#  define archive_sha1_final(ctx, buf)		SHA1Final(buf, ctx)
+-#  define archive_sha1_update(ctx, buf, n)	SHA1Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA1_LIBSYSTEM)
+-#  include <CommonCrypto/CommonDigest.h>
+-#  define ARCHIVE_HAS_SHA1
+-typedef CC_SHA1_CTX archive_sha1_ctx;
+-#  define archive_sha1_init(ctx)		CC_SHA1_Init(ctx)
+-#  define archive_sha1_final(ctx, buf)		CC_SHA1_Final(buf, ctx)
+-#  define archive_sha1_update(ctx, buf, n)	CC_SHA1_Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA1_OPENSSL)
+-#  include <openssl/sha.h>
+-#  define ARCHIVE_HAS_SHA1
+-typedef SHA_CTX archive_sha1_ctx;
+-#  define archive_sha1_init(ctx)		SHA1_Init(ctx)
+-#  define archive_sha1_final(ctx, buf)		SHA1_Final(buf, ctx)
+-#  define archive_sha1_update(ctx, buf, n)	SHA1_Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA1_WIN)
+-#  define ARCHIVE_HAS_SHA1
+-#  define SHA1_DIGEST_LENGTH	20
+-typedef Digest_CTX archive_sha1_ctx;
+-#  define archive_sha1_init(ctx)		__la_hash_Init(ctx, CALG_SHA1)
+-#  define archive_sha1_final(ctx, buf)		__la_hash_Final(buf, SHA1_DIGEST_LENGTH, ctx)
+-#  define archive_sha1_update(ctx, buf, n)	__la_hash_Update(ctx, buf, n)
+-#endif
+-
+-#if defined(ARCHIVE_HASH_SHA256_LIBC)
+-#  include <sha2.h>
+-#  define ARCHIVE_HAS_SHA256
+-typedef SHA256_CTX archive_sha256_ctx;
+-#  define archive_sha256_init(ctx)		SHA256_Init(ctx)
+-#  define archive_sha256_final(ctx, buf)	SHA256_Final(buf, ctx)
+-#  define archive_sha256_update(ctx, buf, n)	SHA256_Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA256_LIBC2)
+-#  include <sha2.h>
+-#  define ARCHIVE_HAS_SHA256
+-typedef SHA256_CTX archive_sha256_ctx;
+-#  define archive_sha256_init(ctx)		SHA256Init(ctx)
+-#  define archive_sha256_final(ctx, buf)	SHA256Final(buf, ctx)
+-#  define archive_sha256_update(ctx, buf, n)	SHA256Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA256_LIBC3)
+-#  include <sha2.h>
+-#  define ARCHIVE_HAS_SHA256
+-typedef SHA2_CTX archive_sha256_ctx;
+-#  define archive_sha256_init(ctx)		SHA256Init(ctx)
+-#  define archive_sha256_final(ctx, buf)	SHA256Final(buf, ctx)
+-#  define archive_sha256_update(ctx, buf, n)	SHA256Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA256_LIBSYSTEM)
+-#  include <CommonCrypto/CommonDigest.h>
+-#  define ARCHIVE_HAS_SHA256
+-typedef CC_SHA256_CTX archive_shs256_ctx;
+-#  define archive_shs256_init(ctx)		CC_SHA256_Init(ctx)
+-#  define archive_shs256_final(ctx, buf)	CC_SHA256_Final(buf, ctx)
+-#  define archive_shs256_update(ctx, buf, n)	CC_SHA256_Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA256_OPENSSL)
+-#  include <openssl/sha.h>
+-#  define ARCHIVE_HAS_SHA256
+-typedef SHA256_CTX archive_sha256_ctx;
+-#  define archive_sha256_init(ctx)		SHA256_Init(ctx)
+-#  define archive_sha256_final(ctx, buf)	SHA256_Final(buf, ctx)
+-#  define archive_sha256_update(ctx, buf, n)	SHA256_Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA256_WIN)
+-#  define ARCHIVE_HAS_SHA256
+-#  define SHA256_DIGEST_LENGTH	32
+-typedef Digest_CTX archive_sha256_ctx;
+-#  define archive_sha256_init(ctx)		__la_hash_Init(ctx, CALG_SHA_256)
+-#  define archive_sha256_final(ctx, buf)	__la_hash_Final(buf, SHA256_DIGEST_LENGTH, ctx)
+-#  define archive_sha256_update(ctx, buf, n)	__la_hash_Update(ctx, buf, n)
+-#endif
+-
+-#if defined(ARCHIVE_HASH_SHA384_LIBC)
+-#  include <sha2.h>
+-#  define ARCHIVE_HAS_SHA384
+-typedef SHA384_CTX archive_sha384_ctx;
+-#  define archive_sha384_init(ctx)		SHA384_Init(ctx)
+-#  define archive_sha384_final(ctx, buf)	SHA384_Final(buf, ctx)
+-#  define archive_sha384_update(ctx, buf, n)	SHA384_Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA384_LIBC2)
+-#  include <sha2.h>
+-#  define ARCHIVE_HAS_SHA384
+-typedef SHA384_CTX archive_sha384_ctx;
+-#  define archive_sha384_init(ctx)		SHA384Init(ctx)
+-#  define archive_sha384_final(ctx, buf)	SHA384Final(buf, ctx)
+-#  define archive_sha384_update(ctx, buf, n)	SHA384Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA384_LIBC3)
+-#  include <sha2.h>
+-#  define ARCHIVE_HAS_SHA384
+-typedef SHA2_CTX archive_sha384_ctx;
+-#  define archive_sha384_init(ctx)		SHA384Init(ctx)
+-#  define archive_sha384_final(ctx, buf)	SHA384Final(buf, ctx)
+-#  define archive_sha384_update(ctx, buf, n)	SHA384Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA384_LIBSYSTEM)
+-#  include <CommonCrypto/CommonDigest.h>
+-#  define ARCHIVE_HAS_SHA384
+-typedef CC_SHA512_CTX archive_shs384_ctx;
+-#  define archive_shs384_init(ctx)		CC_SHA384_Init(ctx)
+-#  define archive_shs384_final(ctx, buf)	CC_SHA384_Final(buf, ctx)
+-#  define archive_shs384_update(ctx, buf, n)	CC_SHA384_Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA384_OPENSSL)
+-#  include <openssl/sha.h>
+-#  define ARCHIVE_HAS_SHA384
+-typedef SHA512_CTX archive_sha384_ctx;
+-#  define archive_sha384_init(ctx)		SHA384_Init(ctx)
+-#  define archive_sha384_final(ctx, buf)	SHA384_Final(buf, ctx)
+-#  define archive_sha384_update(ctx, buf, n)	SHA384_Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA384_WIN)
+-#  define ARCHIVE_HAS_SHA384
+-#  define SHA384_DIGEST_LENGTH	48
+-typedef Digest_CTX archive_sha384_ctx;
+-#  define archive_sha384_init(ctx)		__la_hash_Init(ctx, CALG_SHA_384)
+-#  define archive_sha384_final(ctx, buf)	__la_hash_Final(buf, SHA384_DIGEST_LENGTH, ctx)
+-#  define archive_sha384_update(ctx, buf, n)	__la_hash_Update(ctx, buf, n)
+-#endif
+-
+-#if defined(ARCHIVE_HASH_SHA512_LIBC)
+-#  include <sha2.h>
+-#  define ARCHIVE_HAS_SHA512
+-typedef SHA512_CTX archive_sha512_ctx;
+-#  define archive_sha512_init(ctx)		SHA512_Init(ctx)
+-#  define archive_sha512_final(ctx, buf)	SHA512_Final(buf, ctx)
+-#  define archive_sha512_update(ctx, buf, n)	SHA512_Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA512_LIBC2)
+-#  include <sha2.h>
+-#  define ARCHIVE_HAS_SHA512
+-typedef SHA512_CTX archive_sha512_ctx;
+-#  define archive_sha512_init(ctx)		SHA512Init(ctx)
+-#  define archive_sha512_final(ctx, buf)	SHA512Final(buf, ctx)
+-#  define archive_sha512_update(ctx, buf, n)	SHA512Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA512_LIBC3)
+-#  include <sha2.h>
+-#  define ARCHIVE_HAS_SHA512
+-typedef SHA2_CTX archive_sha512_ctx;
+-#  define archive_sha512_init(ctx)		SHA512Init(ctx)
+-#  define archive_sha512_final(ctx, buf)	SHA512Final(buf, ctx)
+-#  define archive_sha512_update(ctx, buf, n)	SHA512Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA512_LIBSYSTEM)
+-#  include <CommonCrypto/CommonDigest.h>
+-#  define ARCHIVE_HAS_SHA512
+-typedef CC_SHA512_CTX archive_shs512_ctx;
+-#  define archive_shs512_init(ctx)		CC_SHA512_Init(ctx)
+-#  define archive_shs512_final(ctx, buf)	CC_SHA512_Final(buf, ctx)
+-#  define archive_shs512_update(ctx, buf, n)	CC_SHA512_Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA512_OPENSSL)
+-#  include <openssl/sha.h>
+-#  define ARCHIVE_HAS_SHA512
+-typedef SHA512_CTX archive_sha512_ctx;
+-#  define archive_sha512_init(ctx)		SHA512_Init(ctx)
+-#  define archive_sha512_final(ctx, buf)	SHA512_Final(buf, ctx)
+-#  define archive_sha512_update(ctx, buf, n)	SHA512_Update(ctx, buf, n)
+-#elif defined(ARCHIVE_HASH_SHA512_WIN)
+-#  define ARCHIVE_HAS_SHA512
+-#  define SHA512_DIGEST_LENGTH	64
+-typedef Digest_CTX archive_sha512_ctx;
+-#  define archive_sha512_init(ctx)		__la_hash_Init(ctx, CALG_SHA_512)
+-#  define archive_sha512_final(ctx, buf)	__la_hash_Final(buf, SHA512_DIGEST_LENGTH, ctx)
+-#  define archive_sha512_update(ctx, buf, n)	__la_hash_Update(ctx, buf, n)
+-#endif
+diff --git a/libarchive/archive_read_support_format_xar.c b/libarchive/archive_read_support_format_xar.c
+index 1642753..adbccbd 100644
+--- a/libarchive/archive_read_support_format_xar.c
++++ b/libarchive/archive_read_support_format_xar.c
+@@ -52,10 +52,10 @@ __FBSDID("$FreeBSD$");
+ #endif
+ 
+ #include "archive.h"
++#include "archive_crypto_private.h"
+ #include "archive_endian.h"
+ #include "archive_entry.h"
+ #include "archive_entry_locale.h"
+-#include "archive_hash.h"
+ #include "archive_private.h"
+ #include "archive_read_private.h"
+ 
+diff --git a/libarchive/archive_write_set_format_mtree.c b/libarchive/archive_write_set_format_mtree.c
+index 92beba6..1aa17e4 100644
+--- a/libarchive/archive_write_set_format_mtree.c
++++ b/libarchive/archive_write_set_format_mtree.c
+@@ -35,12 +35,11 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_format_mtree.c 201171
+ #include <string.h>
+ 
+ #include "archive.h"
++#include "archive_crypto_private.h"
+ #include "archive_entry.h"
+ #include "archive_private.h"
+ #include "archive_write_private.h"
+ 
+-#include "archive_hash.h"
+-
+ #define INDENTNAMELEN	15
+ #define MAXLINELEN	80
+ #define SET_KEYS	\
+diff --git a/libarchive/archive_write_set_format_xar.c b/libarchive/archive_write_set_format_xar.c
+index 2274328..8079e8d 100644
+--- a/libarchive/archive_write_set_format_xar.c
++++ b/libarchive/archive_write_set_format_xar.c
+@@ -57,10 +57,10 @@ __FBSDID("$FreeBSD$");
+ #endif
+ 
+ #include "archive.h"
++#include "archive_crypto_private.h"
+ #include "archive_endian.h"
+ #include "archive_entry.h"
+ #include "archive_entry_locale.h"
+-#include "archive_hash.h"
+ #include "archive_private.h"
+ #include "archive_rb.h"
+ #include "archive_string.h"
+diff --git a/libarchive/test/CMakeLists.txt b/libarchive/test/CMakeLists.txt
+index 2fc1470..a07466f 100644
+--- a/libarchive/test/CMakeLists.txt
++++ b/libarchive/test/CMakeLists.txt
+@@ -14,6 +14,7 @@ IF(ENABLE_TEST)
+     test_acl_posix1e.c
+     test_archive_api_feature.c
+     test_archive_clear_error.c
++    test_archive_crypto.c
+     test_archive_read_close_twice.c
+     test_archive_read_close_twice_open_fd.c
+     test_archive_read_close_twice_open_filename.c
+diff --git a/libarchive/test/test_archive_crypto.c b/libarchive/test/test_archive_crypto.c
+new file mode 100644
+index 0000000..bb75e5f
+--- /dev/null
++++ b/libarchive/test/test_archive_crypto.c
+@@ -0,0 +1,144 @@
++/*-
++ * Copyright (c) 2003-2007 Tim Kientzle
++ * Copyright (c) 2011 Andres Mejia
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++ * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++#include "test.h"
++
++/* Sanity test of internal crypto functionality */
++
++#define __LIBARCHIVE_BUILD 1
++#include "archive_crypto_private.h"
++
++/* TODO: a better way to generate list.h should be implemented, the below
++ * tests should not be defined when crypto functionality is not
++ * available.
++ */
++
++DEFINE_TEST(test_archive_md5)
++{
++#ifdef ARCHIVE_HAS_MD5
++  archive_md5_ctx ctx;
++  unsigned char buf[] = "";
++  unsigned char md[16];
++  unsigned char actualmd[] = "\x93\xb8\x85\xad\xfe\x0d\xa0\x89"
++                             "\xcd\xf6\x34\x90\x4f\xd5\x9f\x71";
++
++  assert(0 == archive_md5_init(&ctx));
++  assert(0 == archive_md5_update(&ctx, buf, sizeof(buf)));
++  assert(0 == archive_md5_final(&ctx, md));
++  assertEqualMem(md, actualmd, sizeof(md));
++#endif
++}
++
++DEFINE_TEST(test_archive_rmd160)
++{
++#ifdef ARCHIVE_HAS_RMD160
++  archive_rmd160_ctx ctx;
++  unsigned char buf[] = "";
++  unsigned char md[20];
++  unsigned char actualmd[] = "\xc8\x1b\x94\x93\x34\x20\x22\x1a\x7a\xc0"
++                             "\x04\xa9\x02\x42\xd8\xb1\xd3\xe5\x07\x0d";
++
++  assert(0 == archive_rmd160_init(&ctx));
++  assert(0 == archive_rmd160_update(&ctx, buf, sizeof(buf)));
++  assert(0 == archive_rmd160_final(&ctx, md));
++  assertEqualMem(md, actualmd, sizeof(md));
++#endif
++}
++
++DEFINE_TEST(test_archive_sha1)
++{
++#ifdef ARCHIVE_HAS_SHA1
++  archive_sha1_ctx ctx;
++  unsigned char buf[] = "";
++  unsigned char md[20];
++  unsigned char actualmd[] = "\x5b\xa9\x3c\x9d\xb0\xcf\xf9\x3f\x52\xb5"
++                             "\x21\xd7\x42\x0e\x43\xf6\xed\xa2\x78\x4f";
++
++  assert(0 == archive_sha1_init(&ctx));
++  assert(0 == archive_sha1_update(&ctx, buf, sizeof(buf)));
++  assert(0 == archive_sha1_final(&ctx, md));
++  assertEqualMem(md, actualmd, sizeof(md));
++#endif
++}
++
++DEFINE_TEST(test_archive_sha256)
++{
++#ifdef ARCHIVE_HAS_SHA256
++  archive_sha256_ctx ctx;
++  unsigned char buf[] = "";
++  unsigned char md[32];
++  unsigned char actualmd[] = "\x6e\x34\x0b\x9c\xff\xb3\x7a\x98"
++                             "\x9c\xa5\x44\xe6\xbb\x78\x0a\x2c"
++                             "\x78\x90\x1d\x3f\xb3\x37\x38\x76"
++                             "\x85\x11\xa3\x06\x17\xaf\xa0\x1d";
++
++  assert(0 == archive_sha256_init(&ctx));
++  assert(0 == archive_sha256_update(&ctx, buf, sizeof(buf)));
++  assert(0 == archive_sha256_final(&ctx, md));
++  assertEqualMem(md, actualmd, sizeof(md));
++#endif
++}
++
++DEFINE_TEST(test_archive_sha384)
++{
++#ifdef ARCHIVE_HAS_SHA384
++  archive_sha384_ctx ctx;
++  unsigned char buf[] = "";
++  unsigned char md[48];
++  unsigned char actualmd[] = "\xbe\xc0\x21\xb4\xf3\x68\xe3\x06"
++                             "\x91\x34\xe0\x12\xc2\xb4\x30\x70"
++                             "\x83\xd3\xa9\xbd\xd2\x06\xe2\x4e"
++                             "\x5f\x0d\x86\xe1\x3d\x66\x36\x65"
++                             "\x59\x33\xec\x2b\x41\x34\x65\x96"
++                             "\x68\x17\xa9\xc2\x08\xa1\x17\x17";
++
++  assert(0 == archive_sha384_init(&ctx));
++  assert(0 == archive_sha384_update(&ctx, buf, sizeof(buf)));
++  assert(0 == archive_sha384_final(&ctx, md));
++  assertEqualMem(md, actualmd, sizeof(md));
++#endif
++}
++
++DEFINE_TEST(test_archive_sha512)
++{
++#ifdef ARCHIVE_HAS_SHA512
++  archive_sha512_ctx ctx;
++  unsigned char buf[] = "";
++  unsigned char md[64];
++  unsigned char actualmd[] = "\xb8\x24\x4d\x02\x89\x81\xd6\x93"
++                             "\xaf\x7b\x45\x6a\xf8\xef\xa4\xca"
++                             "\xd6\x3d\x28\x2e\x19\xff\x14\x94"
++                             "\x2c\x24\x6e\x50\xd9\x35\x1d\x22"
++                             "\x70\x4a\x80\x2a\x71\xc3\x58\x0b"
++                             "\x63\x70\xde\x4c\xeb\x29\x3c\x32"
++                             "\x4a\x84\x23\x34\x25\x57\xd4\xe5"
++                             "\xc3\x84\x38\xf0\xe3\x69\x10\xee";
++
++  assert(0 == archive_sha512_init(&ctx));
++  assert(0 == archive_sha512_update(&ctx, buf, sizeof(buf)));
++  assert(0 == archive_sha512_final(&ctx, md));
++  assertEqualMem(md, actualmd, sizeof(md));
++#endif
++}

@@ -1,0 +1,466 @@
+Index: libarchive/archive_read_support_format_cpio.c
+===================================================================
+--- libarchive/archive_read_support_format_cpio.c	(revision 3759)
++++ libarchive/archive_read_support_format_cpio.c	(working copy)
+@@ -253,17 +253,15 @@
+ static int
+ archive_read_format_cpio_bid(struct archive_read *a)
+ {
+-	const void *h;
+ 	const unsigned char *p;
+ 	struct cpio *cpio;
+ 	int bid;
+ 
+ 	cpio = (struct cpio *)(a->format->data);
+ 
+-	if ((h = __archive_read_ahead(a, 6, NULL)) == NULL)
++	if ((p = __archive_read_ahead(a, 6, NULL)) == NULL)
+ 		return (-1);
+ 
+-	p = (const unsigned char *)h;
+ 	bid = 0;
+ 	if (memcmp(p, "070707", 6) == 0) {
+ 		/* ASCII cpio archive (odc, POSIX.1) */
+Index: libarchive/archive_read_support_format_ar.c
+===================================================================
+--- libarchive/archive_read_support_format_ar.c	(revision 3759)
++++ libarchive/archive_read_support_format_ar.c	(working copy)
+@@ -159,7 +159,7 @@
+ 	 */
+ 	if ((h = __archive_read_ahead(a, 8, NULL)) == NULL)
+ 		return (-1);
+-	if (strncmp((const char*)h, "!<arch>\n", 8) == 0) {
++	if (memcmp(h, "!<arch>\n", 8) == 0) {
+ 		return (64);
+ 	}
+ 	return (-1);
+Index: libarchive/archive_read_support_format_zip.c
+===================================================================
+--- libarchive/archive_read_support_format_zip.c	(revision 3759)
++++ libarchive/archive_read_support_format_zip.c	(working copy)
+@@ -185,7 +185,6 @@
+ archive_read_format_zip_bid(struct archive_read *a)
+ {
+ 	const char *p;
+-	const void *buff;
+ 	ssize_t bytes_avail, offset;
+ 
+ 	if ((p = __archive_read_ahead(a, 4, NULL)) == NULL)
+@@ -222,12 +221,12 @@
+ 		offset = 0;
+ 		while (offset < 124000) {
+ 			/* Get 4k of data beyond where we stopped. */
+-			buff = __archive_read_ahead(a, offset + 4096,
++			const char *buff = __archive_read_ahead(a, offset + 4096,
+ 			    &bytes_avail);
+ 			if (buff == NULL)
+ 				break;
+-			p = (const char *)buff + offset;
+-			while (p + 9 < (const char *)buff + bytes_avail) {
++			p = buff + offset;
++			while (p + 9 < buff + bytes_avail) {
+ 				if (p[0] == 'P' && p[1] == 'K' /* signature */
+ 				    && p[2] == 3 && p[3] == 4 /* File entry */
+ 				    && p[8] == 8 /* compression == deflate */
+@@ -238,7 +237,7 @@
+ 				}
+ 				++p;
+ 			}
+-			offset = p - (const char *)buff;
++			offset = p - buff;
+ 		}
+ 	}
+ 
+@@ -255,7 +254,7 @@
+ 	zip = (struct zip *)(a->format->data);
+ 	if (strcmp(key, "compat-2x")  == 0) {
+ 		/* Handle filnames as libarchive 2.x */
+-		zip->init_default_conversion = (val != NULL)?1:0;
++		zip->init_default_conversion = (val != NULL) ? 1 : 0;
+ 		ret = ARCHIVE_OK;
+ 	} else if (strcmp(key, "hdrcharset")  == 0) {
+ 		if (val == NULL || val[0] == 0)
+@@ -921,7 +920,6 @@
+ archive_read_format_zip_read_data_skip(struct archive_read *a)
+ {
+ 	struct zip *zip;
+-	const void *buff = NULL;
+ 	int64_t bytes_skipped;
+ 
+ 	zip = (struct zip *)(a->format->data);
+@@ -947,6 +945,7 @@
+ 		int64_t offset;
+ 		int r;
+ 		do {
++			const void *buff = NULL;
+ 			r = archive_read_format_zip_read_data(a, &buff,
+ 			    &size, &offset);
+ 			flush_unconsumed();
+Index: libarchive/archive_read_support_format_iso9660.c
+===================================================================
+--- libarchive/archive_read_support_format_iso9660.c	(revision 3759)
++++ libarchive/archive_read_support_format_iso9660.c	(working copy)
+@@ -490,7 +490,6 @@
+ {
+ 	struct iso9660 *iso9660;
+ 	ssize_t bytes_read;
+-	const void *h;
+ 	const unsigned char *p;
+ 	int seenTerminator;
+ 
+@@ -502,12 +501,11 @@
+ 	 * if the I/O layer gives us more, we'll take it.
+ 	 */
+ #define RESERVED_AREA	(SYSTEM_AREA_BLOCK * LOGICAL_BLOCK_SIZE)
+-	h = __archive_read_ahead(a,
++	p = __archive_read_ahead(a,
+ 	    RESERVED_AREA + 8 * LOGICAL_BLOCK_SIZE,
+ 	    &bytes_read);
+-	if (h == NULL)
++	if (p == NULL)
+ 	    return (-1);
+-	p = (const unsigned char *)h;
+ 
+ 	/* Skip the reserved area. */
+ 	bytes_read -= RESERVED_AREA;
+Index: libarchive/archive_read_support_format_rar.c
+===================================================================
+--- libarchive/archive_read_support_format_rar.c	(revision 3759)
++++ libarchive/archive_read_support_format_rar.c	(working copy)
+@@ -662,12 +662,11 @@
+ 
+   if (p[0] == 'M' && p[1] == 'Z') {
+     /* This is a PE file */
+-    const void *buff;
+     ssize_t offset = 0x10000;
+     ssize_t window = 4096;
+     ssize_t bytes_avail;
+     while (offset + window <= (1024 * 128)) {
+-      buff = __archive_read_ahead(a, offset + window, &bytes_avail);
++      const char *buff = __archive_read_ahead(a, offset + window, &bytes_avail);
+       if (buff == NULL) {
+         /* Remaining bytes are less than window. */
+         window >>= 1;
+@@ -675,13 +674,13 @@
+           return (0);
+         continue;
+       }
+-      p = (const char *)buff + offset;
+-      while (p + 7 < (const char *)buff + bytes_avail) {
++      p = buff + offset;
++      while (p + 7 < buff + bytes_avail) {
+         if (memcmp(p, RAR_SIGNATURE, 7) == 0)
+           return (30);
+         p += 0x100;
+       }
+-      offset = p - (const char *)buff;
++      offset = p - buff;
+     }
+   }
+   return (0);
+Index: libarchive/archive_read_support_format_tar.c
+===================================================================
+--- libarchive/archive_read_support_format_tar.c	(revision 3759)
++++ libarchive/archive_read_support_format_tar.c	(working copy)
+@@ -319,12 +319,12 @@
+ 
+ 	/* Recognize POSIX formats. */
+ 	if ((memcmp(header->magic, "ustar\0", 6) == 0)
+-	    &&(memcmp(header->version, "00", 2)==0))
++	    &&(memcmp(header->version, "00", 2) == 0))
+ 		bid += 56;
+ 
+ 	/* Recognize GNU tar format. */
+ 	if ((memcmp(header->magic, "ustar ", 6) == 0)
+-	    &&(memcmp(header->version, " \0", 2)==0))
++	    &&(memcmp(header->version, " \0", 2) == 0))
+ 		bid += 56;
+ 
+ 	/* Type flag must be null, digit or A-Z, a-z. */
+@@ -640,7 +640,7 @@
+ 	*unconsumed = 512;
+ 
+ 	/* Check for end-of-archive mark. */
+-	if (((*(const char *)h)==0) && archive_block_is_null((const unsigned char *)h)) {
++	if (((*(const char *)h) == 0) && archive_block_is_null((const unsigned char *)h)) {
+ 		/* Try to consume a second all-null record, as well. */
+ 		tar_flush_unconsumed(a, unconsumed);
+ 		h = __archive_read_ahead(a, 512, NULL);
+@@ -1623,7 +1623,7 @@
+ 	void *value_decoded;
+ 	size_t value_len;
+ 
+-	if (strlen(name) < 18 || (strncmp(name, "LIBARCHIVE.xattr.", 17)) != 0)
++	if (strlen(name) < 18 || (memcmp(name, "LIBARCHIVE.xattr.", 17)) != 0)
+ 		return 3;
+ 
+ 	name += 17;
+@@ -1740,19 +1740,19 @@
+ 		/* Our extensions */
+ /* TODO: Handle arbitrary extended attributes... */
+ /*
+-		if (strcmp(key, "LIBARCHIVE.xxxxxxx")==0)
++		if (strcmp(key, "LIBARCHIVE.xxxxxxx") == 0)
+ 			archive_entry_set_xxxxxx(entry, value);
+ */
+-		if (strcmp(key, "LIBARCHIVE.creationtime")==0) {
++		if (strcmp(key, "LIBARCHIVE.creationtime") == 0) {
+ 			pax_time(value, &s, &n);
+ 			archive_entry_set_birthtime(entry, s, n);
+ 		}
+-		if (strncmp(key, "LIBARCHIVE.xattr.", 17)==0)
++		if (strcmp(key, "LIBARCHIVE.xattr.") == 0)
+ 			pax_attribute_xattr(entry, key, value);
+ 		break;
+ 	case 'S':
+ 		/* We support some keys used by the "star" archiver */
+-		if (strcmp(key, "SCHILY.acl.access")==0) {
++		if (strcmp(key, "SCHILY.acl.access") == 0) {
+ 			if (tar->sconv_acl == NULL) {
+ 				tar->sconv_acl =
+ 				    archive_string_conversion_from_charset(
+@@ -1776,7 +1776,7 @@
+ 				    ARCHIVE_ERRNO_MISC,
+ 				    "Parse error: SCHILY.acl.access");
+ 			}
+-		} else if (strcmp(key, "SCHILY.acl.default")==0) {
++		} else if (strcmp(key, "SCHILY.acl.default") == 0) {
+ 			if (tar->sconv_acl == NULL) {
+ 				tar->sconv_acl =
+ 				    archive_string_conversion_from_charset(
+@@ -1800,27 +1800,27 @@
+ 				    ARCHIVE_ERRNO_MISC,
+ 				    "Parse error: SCHILY.acl.default");
+ 			}
+-		} else if (strcmp(key, "SCHILY.devmajor")==0) {
++		} else if (strcmp(key, "SCHILY.devmajor") == 0) {
+ 			archive_entry_set_rdevmajor(entry,
+ 			    tar_atol10(value, strlen(value)));
+-		} else if (strcmp(key, "SCHILY.devminor")==0) {
++		} else if (strcmp(key, "SCHILY.devminor") == 0) {
+ 			archive_entry_set_rdevminor(entry,
+ 			    tar_atol10(value, strlen(value)));
+-		} else if (strcmp(key, "SCHILY.fflags")==0) {
++		} else if (strcmp(key, "SCHILY.fflags") == 0) {
+ 			archive_entry_copy_fflags_text(entry, value);
+-		} else if (strcmp(key, "SCHILY.dev")==0) {
++		} else if (strcmp(key, "SCHILY.dev") == 0) {
+ 			archive_entry_set_dev(entry,
+ 			    tar_atol10(value, strlen(value)));
+-		} else if (strcmp(key, "SCHILY.ino")==0) {
++		} else if (strcmp(key, "SCHILY.ino") == 0) {
+ 			archive_entry_set_ino(entry,
+ 			    tar_atol10(value, strlen(value)));
+-		} else if (strcmp(key, "SCHILY.nlink")==0) {
++		} else if (strcmp(key, "SCHILY.nlink") == 0) {
+ 			archive_entry_set_nlink(entry,
+ 			    tar_atol10(value, strlen(value)));
+-		} else if (strcmp(key, "SCHILY.realsize")==0) {
++		} else if (strcmp(key, "SCHILY.realsize") == 0) {
+ 			tar->realsize = tar_atol10(value, strlen(value));
+ 			archive_entry_set_size(entry, tar->realsize);
+-		} else if (strcmp(key, "SUN.holesdata")==0) {
++		} else if (strcmp(key, "SUN.holesdata") == 0) {
+ 			/* A Solaris extension for sparse. */
+ 			r = solaris_sparse_parse(a, tar, entry, value);
+ 			if (r < err) {
+@@ -1834,26 +1834,26 @@
+ 		}
+ 		break;
+ 	case 'a':
+-		if (strcmp(key, "atime")==0) {
++		if (strcmp(key, "atime") == 0) {
+ 			pax_time(value, &s, &n);
+ 			archive_entry_set_atime(entry, s, n);
+ 		}
+ 		break;
+ 	case 'c':
+-		if (strcmp(key, "ctime")==0) {
++		if (strcmp(key, "ctime") == 0) {
+ 			pax_time(value, &s, &n);
+ 			archive_entry_set_ctime(entry, s, n);
+-		} else if (strcmp(key, "charset")==0) {
++		} else if (strcmp(key, "charset") == 0) {
+ 			/* TODO: Publish charset information in entry. */
+-		} else if (strcmp(key, "comment")==0) {
++		} else if (strcmp(key, "comment") == 0) {
+ 			/* TODO: Publish comment in entry. */
+ 		}
+ 		break;
+ 	case 'g':
+-		if (strcmp(key, "gid")==0) {
++		if (strcmp(key, "gid") == 0) {
+ 			archive_entry_set_gid(entry,
+ 			    tar_atol10(value, strlen(value)));
+-		} else if (strcmp(key, "gname")==0) {
++		} else if (strcmp(key, "gname") == 0) {
+ 			archive_strcpy(&(tar->entry_gname), value);
+ 		}
+ 		break;
+@@ -1868,18 +1868,18 @@
+ 		break;
+ 	case 'l':
+ 		/* pax interchange doesn't distinguish hardlink vs. symlink. */
+-		if (strcmp(key, "linkpath")==0) {
++		if (strcmp(key, "linkpath") == 0) {
+ 			archive_strcpy(&(tar->entry_linkpath), value);
+ 		}
+ 		break;
+ 	case 'm':
+-		if (strcmp(key, "mtime")==0) {
++		if (strcmp(key, "mtime") == 0) {
+ 			pax_time(value, &s, &n);
+ 			archive_entry_set_mtime(entry, s, n);
+ 		}
+ 		break;
+ 	case 'p':
+-		if (strcmp(key, "path")==0) {
++		if (strcmp(key, "path") == 0) {
+ 			archive_strcpy(&(tar->entry_pathname), value);
+ 		}
+ 		break;
+@@ -1888,8 +1888,8 @@
+ 		break;
+ 	case 's':
+ 		/* POSIX has reserved 'security.*' */
+-		/* Someday: if (strcmp(key, "security.acl")==0) { ... } */
+-		if (strcmp(key, "size")==0) {
++		/* Someday: if (strcmp(key, "security.acl") == 0) { ... } */
++		if (strcmp(key, "size") == 0) {
+ 			/* "size" is the size of the data in the entry. */
+ 			tar->entry_bytes_remaining
+ 			    = tar_atol10(value, strlen(value));
+@@ -1910,10 +1910,10 @@
+ 		}
+ 		break;
+ 	case 'u':
+-		if (strcmp(key, "uid")==0) {
++		if (strcmp(key, "uid") == 0) {
+ 			archive_entry_set_uid(entry,
+ 			    tar_atol10(value, strlen(value)));
+-		} else if (strcmp(key, "uname")==0) {
++		} else if (strcmp(key, "uname") == 0) {
+ 			archive_strcpy(&(tar->entry_uname), value);
+ 		}
+ 		break;
+Index: libarchive/archive_read_support_format_mtree.c
+===================================================================
+--- libarchive/archive_read_support_format_mtree.c	(revision 3759)
++++ libarchive/archive_read_support_format_mtree.c	(working copy)
+@@ -534,7 +534,7 @@
+ 	if (p == NULL)
+ 		return (-1);
+ 
+-	if (strncmp(p, signature, strlen(signature)) == 0)
++	if (memcmp(p, signature, strlen(signature)) == 0)
+ 		return (8 * (int)strlen(signature));
+ 
+ 	/*
+Index: libarchive/archive_read_support_format_cab.c
+===================================================================
+--- libarchive/archive_read_support_format_cab.c	(revision 3759)
++++ libarchive/archive_read_support_format_cab.c	(working copy)
+@@ -392,10 +392,8 @@
+ }
+ 
+ static int
+-is_cab_magic(const void *h)
++find_cab_magic(const char *p)
+ {
+-	const unsigned char *p = h;
+-
+ 	switch (p[4]) {
+ 	case 0:
+ 		/*
+@@ -405,8 +403,7 @@
+ 		 * following four bytes which are reserved and must be set
+ 		 * to zero.
+ 		 */
+-		if (p[0] == 'M' && p[1] == 'S' && p[2] == 'C' && p[3] == 'F' &&
+-		    p[5] == 0 && p[6] == 0 && p[7] == 0)
++		if (memcmp(p, "MSCF\0\0\0\0", 8) == 0)
+ 			return 0;
+ 		return 5;
+ 	case 'F': return 1;
+@@ -420,15 +417,14 @@
+ static int
+ archive_read_format_cab_bid(struct archive_read *a)
+ {
+-	const void *h;
+ 	const char *p;
+ 	ssize_t bytes_avail, offset, window;
+ 
+-	if ((p = __archive_read_ahead(a, 4, NULL)) == NULL)
++	if ((p = __archive_read_ahead(a, 8, NULL)) == NULL)
+ 		return (-1);
+ 
+-	if (is_cab_magic(p) == 0)
+-		return (32);
++	if (memcmp(p, "MSCF\0\0\0\0", 8) == 0)
++		return (64);
+ 
+ 	/*
+ 	 * Attempt to handle self-extracting archives
+@@ -439,7 +435,7 @@
+ 		offset = 0;
+ 		window = 4096;
+ 		while (offset < (1024 * 128)) {
+-			h = __archive_read_ahead(a, offset + window,
++			const char *h = __archive_read_ahead(a, offset + window,
+ 			    &bytes_avail);
+ 			if (h == NULL) {
+ 				/* Remaining bytes are less than window. */
+@@ -448,14 +444,14 @@
+ 					return (0);
+ 				continue;
+ 			}
+-			p = (const char *)h + offset;
+-			while (p + 8 < (const char *)h + bytes_avail) {
++			p = h + offset;
++			while (p + 8 < h + bytes_avail) {
+ 				int next;
+-				if ((next = is_cab_magic(p)) == 0)
+-					return (32);
++				if ((next = find_cab_magic(p)) == 0)
++					return (64);
+ 				p += next;
+ 			}
+-			offset = p - (const char *)h;
++			offset = p - h;
+ 		}
+ 	}
+ 	return (0);
+@@ -491,14 +487,13 @@
+ static int
+ cab_skip_sfx(struct archive_read *a)
+ {
+-	const void *h;
+ 	const char *p, *q;
+ 	size_t skip;
+ 	ssize_t bytes, window;
+ 
+ 	window = 4096;
+ 	for (;;) {
+-		h = __archive_read_ahead(a, window, &bytes);
++		const char *h = __archive_read_ahead(a, window, &bytes);
+ 		if (h == NULL) {
+ 			/* Remaining size are less than window. */
+ 			window >>= 1;
+@@ -519,14 +514,14 @@
+ 		 */
+ 		while (p + 8 < q) {
+ 			int next;
+-			if ((next = is_cab_magic(p)) == 0) {
+-				skip = p - (const char *)h;
++			if ((next = find_cab_magic(p)) == 0) {
++				skip = p - h;
+ 				__archive_read_consume(a, skip);
+ 				return (ARCHIVE_OK);
+ 			}
+ 			p += next;
+ 		}
+-		skip = p - (const char *)h;
++		skip = p - h;
+ 		__archive_read_consume(a, skip);
+ 	}
+ }

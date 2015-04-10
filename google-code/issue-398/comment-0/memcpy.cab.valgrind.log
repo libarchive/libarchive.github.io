@@ -1,0 +1,11 @@
+bsdtar: Multivolume cabinet file is unsupported
+bsdtar: Removing leading '/' from member names
+==20145== Source and destination overlap in memcpy(0x925b2a0, 0x925b2a1, 2)
+==20145==    at 0x4C2EACD: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==20145==    by 0x465244: archive_mstring_copy_mbs (in /mnt/ram/libarchive/plain/bin/bsdtar)
+==20145==    by 0x4124C6: edit_pathname (in /mnt/ram/libarchive/plain/bin/bsdtar)
+==20145==    by 0x410A46: tar_mode_x (in /mnt/ram/libarchive/plain/bin/bsdtar)
+==20145==    by 0x40EB13: main (in /mnt/ram/libarchive/plain/bin/bsdtar)
+==20145== 
+00: Truncated CAB header
+bsdtar: Error exit delayed from previous errors.

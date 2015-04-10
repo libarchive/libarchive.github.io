@@ -1,0 +1,32 @@
+diff -urN --binary -x builds -x buildd libarchive-3.0.2.orig/CMakeLists.txt libarchive-3.0.2/CMakeLists.txt
+--- libarchive-3.0.2.orig/CMakeLists.txt	2011-12-24 19:00:48.000000000 +0100
++++ libarchive-3.0.2/CMakeLists.txt	2011-12-26 14:25:19.872203200 +0100
+@@ -7,7 +7,14 @@
+ if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${libarchive_BINARY_DIR}/bin)
+ endif()
+-SET(CMAKE_BUILD_TYPE "Debug")
++
++if(WIN32)
++  if (NOT BUILD_SHARED_LIBS)
++    set(CMAKE_C_FLAGS_DEBUG "/D_DEBUG /MTd /Zi /Ob0 /Od /RTC1" CACHE INTERNAL "")
++    set(CMAKE_C_FLAGS_RELEASE "/MT /O2 /Ob2 /D NDEBUG" CACHE INTERNAL "")
++    ADD_DEFINITIONS(-DXML_STATIC)
++  endif (NOT BUILD_SHARED_LIBS)
++endif(WIN32)
+ 
+ # On MacOS, prefer MacPorts libraries to system libraries.
+ # I haven't come up with a compelling argument for this to be conditional.
+diff -urN --binary -x builds -x buildd libarchive-3.0.2.orig/libarchive/test/test_write_format_zip.c libarchive-3.0.2/libarchive/test/test_write_format_zip.c
+--- libarchive-3.0.2.orig/libarchive/test/test_write_format_zip.c	2011-12-24 18:56:28.000000000 +0100
++++ libarchive-3.0.2/libarchive/test/test_write_format_zip.c	2011-12-26 11:33:49.691890800 +0100
+@@ -187,7 +187,9 @@
+ 	archive_entry_copy_symlink(ae, "file1");
+ 	assertEqualString("file1", archive_entry_symlink(ae));
+ 	archive_entry_set_mode(ae, AE_IFLNK | 0755);
++   #ifdef S_IFLNK
+ 	assertEqualInt((S_IFLNK | 0755), archive_entry_mode(ae));
++   #endif
+ 	archive_entry_set_size(ae, 4);
+ 
+ 	assertEqualInt(ARCHIVE_OK, archive_write_header(a, ae));

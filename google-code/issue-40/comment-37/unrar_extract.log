@@ -1,0 +1,25 @@
+$ time unrar x -inul -o+ ~/test_read_format_rar_multi_lzss_blocks.rar
+
+real    0m0.105s
+user    0m0.064s
+sys     0m0.020s
+$ time unrar x -inul -o+ ~/test_read_format_rar_multi_lzss_blocks.rar
+
+real    0m0.109s
+user    0m0.076s
+sys     0m0.012s
+$ time unrar x -inul -o+ ~/test_read_format_rar_multi_lzss_blocks.rar
+
+real    0m0.097s
+user    0m0.064s
+sys     0m0.020s
+$ time unrar x -inul -o+ ~/test_read_format_rar_multi_lzss_blocks.rar
+
+real    0m0.116s
+user    0m0.052s
+sys     0m0.024s
+$ time unrar x -inul -o+ ~/test_read_format_rar_multi_lzss_blocks.rar
+
+real    0m0.115s
+user    0m0.068s
+sys     0m0.020s

@@ -1,0 +1,19 @@
+==20423== Invalid read of size 1
+==20423==    at 0x411867: strip_absolute_path (in /mnt/ram/libarchive/plain/bin/bsdtar)
+==20423==    by 0x41252A: edit_pathname (in /mnt/ram/libarchive/plain/bin/bsdtar)
+==20423==    by 0x410A46: tar_mode_x (in /mnt/ram/libarchive/plain/bin/bsdtar)
+==20423==    by 0x40EB13: main (in /mnt/ram/libarchive/plain/bin/bsdtar)
+==20423==  Address 0x0 is not stack'd, malloc'd or (recently) free'd
+==20423== 
+==20423== 
+==20423== Process terminating with default action of signal 11 (SIGSEGV)
+==20423==  Access not within mapped region at address 0x0
+==20423==    at 0x411867: strip_absolute_path (in /mnt/ram/libarchive/plain/bin/bsdtar)
+==20423==    by 0x41252A: edit_pathname (in /mnt/ram/libarchive/plain/bin/bsdtar)
+==20423==    by 0x410A46: tar_mode_x (in /mnt/ram/libarchive/plain/bin/bsdtar)
+==20423==    by 0x40EB13: main (in /mnt/ram/libarchive/plain/bin/bsdtar)
+==20423==  If you believe this happened as a result of a stack
+==20423==  overflow in your program's main thread (unlikely but
+==20423==  possible), you can try to increase the size of the
+==20423==  main thread stack using the --main-stacksize= flag.
+==20423==  The main thread stack size used in this run was 8388608.

@@ -1,0 +1,7 @@
+test_read_filter_lzop_multiple_parts
+
+libarchive/test/test_read_filter_lzop_multiple_parts.c:44: ARCHIVE_OK != r
+      ARCHIVE_OK=0 (0x0, 00)
+      r=-20 (0xffffffffffffffec, 01777777777777777777754)
+    errno: -1
+   detail: Using external lzop program for lzop decompression

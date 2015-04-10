@@ -1,0 +1,15 @@
+bsdtar: Pathname cannot be converted from UTF-8 to current locale.
+ASAN:SIGSEGV
+=================================================================
+==20099==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x00000042c33c sp 0x7fff753ec550 bp 0x7fff753ec7c0 T0)
+    #0 0x42c33b in strip_absolute_path /mnt/ram/libarchive/tar/util.c:409
+    #1 0x4304e7 in edit_pathname /mnt/ram/libarchive/tar/util.c:538
+    #2 0x425c4b in read_archive /mnt/ram/libarchive/tar/read.c:331
+    #3 0x425c4b in tar_mode_x /mnt/ram/libarchive/tar/read.c:104
+    #4 0x415789 in main /mnt/ram/libarchive/tar/bsdtar.c:805
+    #5 0x7ff8b1d22f9f in __libc_start_main (/lib64/libc.so.6+0x1ff9f)
+    #6 0x41b10d (/mnt/ram/libarchive/b/bin/bsdtar+0x41b10d)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /mnt/ram/libarchive/tar/util.c:409 strip_absolute_path
+==20099==ABORTING

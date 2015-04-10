@@ -1,0 +1,39 @@
+Index: tar/util.c
+===================================================================
+--- tar/util.c	(revision 3419)
++++ tar/util.c	(working copy)
+@@ -365,9 +365,7 @@
+ #if HAVE_REGEX_H
+ 	char *subst_name;
+ 	int r;
+-#endif
+ 
+-#if HAVE_REGEX_H
+ 	r = apply_substitution(bsdtar, name, &subst_name, 0);
+ 	if (r == -1) {
+ 		lafe_warnc(0, "Invalid substitution, skipping entry");
+Index: tar/bsdtar.c
+===================================================================
+--- tar/bsdtar.c	(revision 3419)
++++ tar/bsdtar.c	(working copy)
+@@ -642,8 +642,6 @@
+ 		buff[1] = bsdtar->symlink_mode;
+ 		only_mode(bsdtar, buff, "cru");
+ 	}
+-	if (bsdtar->strip_components != 0)
+-		only_mode(bsdtar, "--strip-components", "xt");
+ 
+ 	/* Filename "-" implies stdio. */
+ 	if (strcmp(bsdtar->filename, "-") == 0)
+Index: tar/bsdtar.1
+===================================================================
+--- tar/bsdtar.1	(revision 3419)
++++ tar/bsdtar.1	(working copy)
+@@ -505,7 +505,6 @@
+ .Nm
+ is run as root.
+ .It Fl Fl strip-components Ar count
+-(x mode only)
+ Remove the specified number of leading path elements.
+ Pathnames with fewer elements will be silently skipped.
+ Note that the pathname is edited after checking inclusion/exclusion patterns

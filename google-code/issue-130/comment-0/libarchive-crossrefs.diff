@@ -1,0 +1,52 @@
+Index: cpio/bsdcpio.1
+===================================================================
+--- cpio/bsdcpio.1	(revision 2944)
++++ cpio/bsdcpio.1	(working copy)
+@@ -140,7 +140,7 @@
+ The default format is
+ .Ar odc .
+ See
+-.Xr libarchive_formats 5
++.Xr libarchive-formats 5
+ for more complete information about the
+ formats currently supported by the underlying
+ .Xr libarchive 3
+Index: libarchive/archive_util.3
+===================================================================
+--- libarchive/archive_util.3	(revision 2944)
++++ libarchive/archive_util.3	(working copy)
+@@ -114,9 +114,9 @@
+ .It Fn archive_file_count
+ Returns a count of the number of files processed by this archive object.
+ The count is incremented by calls to
+-.Xr archive_write_header
++.Xr archive_write_header 3
+ or
+-.Xr archive_read_next_header .
++.Xr archive_read_next_header 3 .
+ .It Fn archive_filter_code
+ Returns a numeric code identifying the indicated filter.
+ See
+Index: libarchive/libarchive_internals.3
+===================================================================
+--- libarchive/libarchive_internals.3	(revision 2944)
++++ libarchive/libarchive_internals.3	(working copy)
+@@ -41,15 +41,15 @@
+ Externally, libarchive exposes most operations through an
+ opaque, object-style interface.
+ The
+-.Xr archive_entry 1
++.Xr archive_entry 3
+ objects store information about a single filesystem object.
+ The rest of the library provides facilities to write
+-.Xr archive_entry 1
++.Xr archive_entry 3
+ objects to archive files,
+ read them from archive files,
+ and write them to disk.
+ (There are plans to add a facility to read
+-.Xr archive_entry 1
++.Xr archive_entry 3
+ objects from disk as well.)
+ .Pp
+ The read and write APIs each have four layers: a public API

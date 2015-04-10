@@ -1,0 +1,387 @@
+Patch to avoid name conflicts with system BSD/POSIX getopt
+Also added casting from int to char to silence compiler warnings
+
+
+Index: tar/bsdtar.c
+===================================================================
+--- tar/bsdtar.c	(revision 2959)
++++ tar/bsdtar.c	(working copy)
+@@ -257,7 +257,7 @@
+ 			/* libarchive doesn't need this; just ignore it. */
+ 			break;
+ 		case 'b': /* SUSv2 */
+-			t = atoi(bsdtar->optarg);
++			t = atoi(bsdtar->optargs);
+ 			if (t <= 0 || t > 8192)
+ 				lafe_errc(1, 0,
+ 				    "Argument to -b is out of range (1..8192)");
+@@ -266,10 +266,10 @@
+ 			bsdtar->bytes_in_last_block = bsdtar->bytes_per_block;
+ 			break;
+ 		case 'C': /* GNU tar */
+-			set_chdir(bsdtar, bsdtar->optarg);
++			set_chdir(bsdtar, bsdtar->optargs);
+ 			break;
+ 		case 'c': /* SUSv2 */
+-			set_mode(bsdtar, opt);
++			set_mode(bsdtar, (char)opt);
+ 			break;
+ 		case OPTION_CHECK_LINKS: /* GNU tar */
+ 			bsdtar->option_warn_links = 1;
+@@ -281,25 +281,25 @@
+ 			bsdtar->enable_copyfile = 0;
+ 			break;
+ 		case OPTION_EXCLUDE: /* GNU tar */
+-			if (lafe_exclude(&bsdtar->matching, bsdtar->optarg))
++			if (lafe_exclude(&bsdtar->matching, bsdtar->optargs))
+ 				lafe_errc(1, 0,
+-				    "Couldn't exclude %s\n", bsdtar->optarg);
++				    "Couldn't exclude %s\n", bsdtar->optargs);
+ 			break;
+ 		case OPTION_FORMAT: /* GNU tar, others */
+-			bsdtar->create_format = bsdtar->optarg;
++			bsdtar->create_format = bsdtar->optargs;
+ 			break;
+ 		case 'f': /* SUSv2 */
+-			bsdtar->filename = bsdtar->optarg;
++			bsdtar->filename = bsdtar->optargs;
+ 			break;
+ 		case OPTION_GID: /* cpio */
+-			t = atoi(bsdtar->optarg);
++			t = atoi(bsdtar->optargs);
+ 			if (t < 0)
+ 				lafe_errc(1, 0,
+ 				    "Argument to --gid must be positive");
+ 			bsdtar->gid = t;
+ 			break;
+ 		case OPTION_GNAME: /* cpio */
+-			bsdtar->gname = bsdtar->optarg;
++			bsdtar->gname = bsdtar->optargs;
+ 			break;
+ 		case 'H': /* BSD convention */
+ 			bsdtar->symlink_mode = 'H';
+@@ -324,7 +324,7 @@
+ 			 * permissions without having to create those
+ 			 * permissions on disk.
+ 			 */
+-			bsdtar->names_from_file = bsdtar->optarg;
++			bsdtar->names_from_file = bsdtar->optargs;
+ 			break;
+ 		case OPTION_INCLUDE:
+ 			/*
+@@ -332,24 +332,24 @@
+ 			 * noone else needs this to filter entries
+ 			 * when transforming archives.
+ 			 */
+-			if (lafe_include(&bsdtar->matching, bsdtar->optarg))
++			if (lafe_include(&bsdtar->matching, bsdtar->optargs))
+ 				lafe_errc(1, 0,
+ 				    "Failed to add %s to inclusion list",
+-				    bsdtar->optarg);
++				    bsdtar->optargs);
+ 			break;
+ 		case 'j': /* GNU tar */
+ 			if (bsdtar->create_compression != '\0')
+ 				lafe_errc(1, 0,
+ 				    "Can't specify both -%c and -%c", opt,
+ 				    bsdtar->create_compression);
+-			bsdtar->create_compression = opt;
++			bsdtar->create_compression = (char)opt;
+ 			break;
+ 		case 'J': /* GNU tar 1.21 and later */
+ 			if (bsdtar->create_compression != '\0')
+ 				lafe_errc(1, 0,
+ 				    "Can't specify both -%c and -%c", opt,
+ 				    bsdtar->create_compression);
+-			bsdtar->create_compression = opt;
++			bsdtar->create_compression = (char)opt;
+ 			break;
+ 		case 'k': /* GNU tar */
+ 			bsdtar->extract_flags |= ARCHIVE_EXTRACT_NO_OVERWRITE;
+@@ -370,7 +370,7 @@
+ 				lafe_errc(1, 0,
+ 				    "Can't specify both -%c and -%c", opt,
+ 				    bsdtar->create_compression);
+-			bsdtar->create_compression = opt;
++			bsdtar->create_compression = (char)opt;
+ 			break;
+ 		case 'm': /* SUSv2 */
+ 			bsdtar->extract_flags &= ~ARCHIVE_EXTRACT_TIME;
+@@ -386,28 +386,28 @@
+ 		 * TODO: Add corresponding "older" options to reverse these.
+ 		 */
+ 		case OPTION_NEWER_CTIME: /* GNU tar */
+-			bsdtar->newer_ctime_sec = get_date(now, bsdtar->optarg);
++			bsdtar->newer_ctime_sec = get_date(now, bsdtar->optargs);
+ 			break;
+ 		case OPTION_NEWER_CTIME_THAN:
+ 			{
+ 				struct stat st;
+-				if (stat(bsdtar->optarg, &st) != 0)
++				if (stat(bsdtar->optargs, &st) != 0)
+ 					lafe_errc(1, 0,
+-					    "Can't open file %s", bsdtar->optarg);
++					    "Can't open file %s", bsdtar->optargs);
+ 				bsdtar->newer_ctime_sec = st.st_ctime;
+ 				bsdtar->newer_ctime_nsec =
+ 				    ARCHIVE_STAT_CTIME_NANOS(&st);
+ 			}
+ 			break;
+ 		case OPTION_NEWER_MTIME: /* GNU tar */
+-			bsdtar->newer_mtime_sec = get_date(now, bsdtar->optarg);
++			bsdtar->newer_mtime_sec = get_date(now, bsdtar->optargs);
+ 			break;
+ 		case OPTION_NEWER_MTIME_THAN:
+ 			{
+ 				struct stat st;
+-				if (stat(bsdtar->optarg, &st) != 0)
++				if (stat(bsdtar->optargs, &st) != 0)
+ 					lafe_errc(1, 0,
+-					    "Can't open file %s", bsdtar->optarg);
++					    "Can't open file %s", bsdtar->optargs);
+ 				bsdtar->newer_mtime_sec = st.st_mtime;
+ 				bsdtar->newer_mtime_nsec =
+ 				    ARCHIVE_STAT_MTIME_NANOS(&st);
+@@ -444,7 +444,7 @@
+ 			bsdtar->option_dont_traverse_mounts = 1;
+ 			break;
+ 		case OPTION_OPTIONS:
+-			bsdtar->option_options = bsdtar->optarg;
++			bsdtar->option_options = bsdtar->optargs;
+ 			break;
+ #if 0
+ 		/*
+@@ -475,14 +475,14 @@
+ 			bsdtar->option_fast_read = 1;
+ 			break;
+ 		case 'r': /* SUSv2 */
+-			set_mode(bsdtar, opt);
++			set_mode(bsdtar, (char)opt);
+ 			break;
+ 		case 'S': /* NetBSD pax-as-tar */
+ 			bsdtar->extract_flags |= ARCHIVE_EXTRACT_SPARSE;
+ 			break;
+ 		case 's': /* NetBSD pax-as-tar */
+ #if HAVE_REGEX_H
+-			add_substitution(bsdtar, bsdtar->optarg);
++			add_substitution(bsdtar, bsdtar->optargs);
+ #else
+ 			lafe_warnc(0,
+ 			    "-s is not supported by this version of bsdtar");
+@@ -493,13 +493,13 @@
+ 			bsdtar->extract_flags |= ARCHIVE_EXTRACT_OWNER;
+ 			break;
+ 		case OPTION_STRIP_COMPONENTS: /* GNU tar 1.15 */
+-			bsdtar->strip_components = atoi(bsdtar->optarg);
++			bsdtar->strip_components = atoi(bsdtar->optargs);
+ 			break;
+ 		case 'T': /* GNU tar */
+-			bsdtar->names_from_file = bsdtar->optarg;
++			bsdtar->names_from_file = bsdtar->optargs;
+ 			break;
+ 		case 't': /* SUSv2 */
+-			set_mode(bsdtar, opt);
++			set_mode(bsdtar, (char)opt);
+ 			bsdtar->verbose++;
+ 			break;
+ 		case OPTION_TOTALS: /* GNU tar */
+@@ -510,17 +510,17 @@
+ 			bsdtar->option_unlink_first = 1;
+ 			break;
+ 		case 'u': /* SUSv2 */
+-			set_mode(bsdtar, opt);
++			set_mode(bsdtar, (char)opt);
+ 			break;
+ 		case OPTION_UID: /* cpio */
+-			t = atoi(bsdtar->optarg);
++			t = atoi(bsdtar->optargs);
+ 			if (t < 0)
+ 				lafe_errc(1, 0,
+ 				    "Argument to --uid must be positive");
+ 			bsdtar->uid = t;
+ 			break;
+ 		case OPTION_UNAME: /* cpio */
+-			bsdtar->uname = bsdtar->optarg;
++			bsdtar->uname = bsdtar->optargs;
+ 			break;
+ 		case 'v': /* SUSv2 */
+ 			bsdtar->verbose++;
+@@ -540,37 +540,37 @@
+ 			bsdtar->option_interactive = 1;
+ 			break;
+ 		case 'X': /* GNU tar */
+-			if (lafe_exclude_from_file(&bsdtar->matching, bsdtar->optarg))
++			if (lafe_exclude_from_file(&bsdtar->matching, bsdtar->optargs))
+ 				lafe_errc(1, 0,
+ 				    "failed to process exclusions from file %s",
+-				    bsdtar->optarg);
++				    bsdtar->optargs);
+ 			break;
+ 		case 'x': /* SUSv2 */
+-			set_mode(bsdtar, opt);
++			set_mode(bsdtar, (char)opt);
+ 			break;
+ 		case 'y': /* FreeBSD version of GNU tar */
+ 			if (bsdtar->create_compression != '\0')
+ 				lafe_errc(1, 0,
+ 				    "Can't specify both -%c and -%c", opt,
+ 				    bsdtar->create_compression);
+-			bsdtar->create_compression = opt;
++			bsdtar->create_compression = (char)opt;
+ 			break;
+ 		case 'Z': /* GNU tar */
+ 			if (bsdtar->create_compression != '\0')
+ 				lafe_errc(1, 0,
+ 				    "Can't specify both -%c and -%c", opt,
+ 				    bsdtar->create_compression);
+-			bsdtar->create_compression = opt;
++			bsdtar->create_compression = (char)opt;
+ 			break;
+ 		case 'z': /* GNU tar, star, many others */
+ 			if (bsdtar->create_compression != '\0')
+ 				lafe_errc(1, 0,
+ 				    "Can't specify both -%c and -%c", opt,
+ 				    bsdtar->create_compression);
+-			bsdtar->create_compression = opt;
++			bsdtar->create_compression = (char)opt;
+ 			break;
+ 		case OPTION_USE_COMPRESS_PROGRAM:
+-			bsdtar->compress_program = bsdtar->optarg;
++			bsdtar->compress_program = bsdtar->optargs;
+ 			break;
+ 		default:
+ 			usage();
+
+
+
+Index: tar/cmdline.c
+===================================================================
+--- tar/cmdline.c	(revision 2959)
++++ tar/cmdline.c	(working copy)
+@@ -58,7 +58,7 @@
+  * a small change to the code below.
+  */
+ 
+-static struct option {
++static struct bsdtar_option {
+ 	const char *name;
+ 	int required;      /* 1 if this option requires an argument. */
+ 	int equivalent;    /* Equivalent short option. */
+@@ -185,13 +185,13 @@
+ 	static int state = state_start;
+ 	static char *opt_word;
+ 
+-	const struct option *popt, *match = NULL, *match2 = NULL;
++	const struct bsdtar_option *popt, *match = NULL, *match2 = NULL;
+ 	const char *p, *long_prefix = "--";
+ 	size_t optlength;
+ 	int opt = '?';
+ 	int required = 0;
+ 
+-	bsdtar->optarg = NULL;
++	bsdtar->optargs = NULL;
+ 
+ 	/* First time through, initialize everything. */
+ 	if (state == state_start) {
+@@ -225,8 +225,8 @@
+ 			if (p == NULL)
+ 				return ('?');
+ 			if (p[1] == ':') {
+-				bsdtar->optarg = *bsdtar->argv;
+-				if (bsdtar->optarg == NULL) {
++				bsdtar->optargs = *bsdtar->argv;
++				if (bsdtar->optargs == NULL) {
+ 					lafe_warnc(0,
+ 					    "Option %c requires an argument",
+ 					    opt);
+@@ -307,7 +307,7 @@
+ 				long_prefix = "-W "; /* For clearer errors. */
+ 			} else {
+ 				state = state_next_word;
+-				bsdtar->optarg = opt_word;
++				bsdtar->optargs = opt_word;
+ 			}
+ 		}
+ 	}
+@@ -321,7 +321,7 @@
+ 		p = strchr(opt_word, '=');
+ 		if (p != NULL) {
+ 			optlength = (size_t)(p - opt_word);
+-			bsdtar->optarg = (char *)(uintptr_t)(p + 1);
++			bsdtar->optargs = (char *)(uintptr_t)(p + 1);
+ 		} else {
+ 			optlength = strlen(opt_word);
+ 		}
+@@ -360,9 +360,9 @@
+ 		/* We've found a unique match; does it need an argument? */
+ 		if (match->required) {
+ 			/* Argument required: get next word if necessary. */
+-			if (bsdtar->optarg == NULL) {
+-				bsdtar->optarg = *bsdtar->argv;
+-				if (bsdtar->optarg == NULL) {
++			if (bsdtar->optargs == NULL) {
++				bsdtar->optargs = *bsdtar->argv;
++				if (bsdtar->optargs == NULL) {
+ 					lafe_warnc(0,
+ 					    "Option %s%s requires an argument",
+ 					    long_prefix, match->name);
+@@ -373,7 +373,7 @@
+ 			}
+ 		} else {
+ 			/* Argument forbidden: fail if there is one. */
+-			if (bsdtar->optarg != NULL) {
++			if (bsdtar->optargs != NULL) {
+ 				lafe_warnc(0,
+ 				    "Option %s%s does not allow an argument",
+ 				    long_prefix, match->name);
+
+
+
+Index: libarchive/archive_read_support_format_mtree.c
+===================================================================
+--- libarchive/archive_read_support_format_mtree.c	(revision 2959)
++++ libarchive/archive_read_support_format_mtree.c	(working copy)
+@@ -218,21 +218,21 @@
+ add_option(struct archive_read *a, struct mtree_option **global,
+     const char *value, size_t len)
+ {
+-	struct mtree_option *option;
++	struct mtree_option *options;
+ 
+-	if ((option = malloc(sizeof(*option))) == NULL) {
++	if ((options = malloc(sizeof(*options))) == NULL) {
+ 		archive_set_error(&a->archive, errno, "Can't allocate memory");
+ 		return (ARCHIVE_FATAL);
+ 	}
+-	if ((option->value = malloc(len + 1)) == NULL) {
+-		free(option);
++	if ((options->value = malloc(len + 1)) == NULL) {
++		free(options);
+ 		archive_set_error(&a->archive, errno, "Can't allocate memory");
+ 		return (ARCHIVE_FATAL);
+ 	}
+-	memcpy(option->value, value, len);
+-	option->value[len] = '\0';
+-	option->next = *global;
+-	*global = option;
++	memcpy(options->value, value, len);
++	options->value[len] = '\0';
++	options->next = *global;
++	*global = options;
+ 	return (ARCHIVE_OK);
+ }
+ 
+@@ -792,11 +792,11 @@
+  */
+ static int
+ parse_keyword(struct archive_read *a, struct mtree *mtree,
+-    struct archive_entry *entry, struct mtree_option *option, int *parsed_kws)
++    struct archive_entry *entry, struct mtree_option *iter, int *parsed_kws)
+ {
+ 	char *val, *key;
+ 
+-	key = option->value;
++	key = iter->value;
+ 
+ 	if (*key == '\0')
+ 		return (ARCHIVE_OK);

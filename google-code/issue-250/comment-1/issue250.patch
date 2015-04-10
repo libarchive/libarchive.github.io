@@ -1,0 +1,96 @@
+diff --git a/libarchive/archive_read_support_format_cab.c b/libarchive/archive_read_support_format_cab.c
+index ac40046..a7b6c5d 100644
+--- a/libarchive/archive_read_support_format_cab.c
++++ b/libarchive/archive_read_support_format_cab.c
+@@ -2353,24 +2353,25 @@ lzx_cleanup_bitstream(struct lzx_stream *strm)
+ #define ST_RD_TRANSLATION_SIZE	1
+ #define ST_RD_BLOCK_TYPE	2
+ #define ST_RD_BLOCK_SIZE	3
+-#define ST_RD_R0		4
+-#define ST_RD_R1		5
+-#define ST_RD_R2		6
+-#define ST_COPY_UNCOMP1		7
+-#define ST_COPY_UNCOMP2		8
+-#define ST_RD_ALIGNED_OFFSET	9
+-#define ST_RD_VERBATIM		10
+-#define ST_RD_PRE_MAIN_TREE_256	11
+-#define ST_MAIN_TREE_256	12
+-#define ST_RD_PRE_MAIN_TREE_REM	13
+-#define ST_MAIN_TREE_REM	14
+-#define ST_RD_PRE_LENGTH_TREE	15
+-#define ST_LENGTH_TREE		16
+-#define ST_MAIN			17
+-#define ST_LENGTH		18
+-#define ST_OFFSET		19
+-#define ST_REAL_POS		20
+-#define ST_COPY			21
++#define ST_RD_ALINE		4
++#define ST_RD_R0		5
++#define ST_RD_R1		6
++#define ST_RD_R2		7
++#define ST_COPY_UNCOMP1		8
++#define ST_COPY_UNCOMP2		9
++#define ST_RD_ALIGNED_OFFSET	10
++#define ST_RD_VERBATIM		11
++#define ST_RD_PRE_MAIN_TREE_256	12
++#define ST_MAIN_TREE_256	13
++#define ST_RD_PRE_MAIN_TREE_REM	14
++#define ST_MAIN_TREE_REM	15
++#define ST_RD_PRE_LENGTH_TREE	16
++#define ST_LENGTH_TREE		17
++#define ST_MAIN			18
++#define ST_LENGTH		19
++#define ST_OFFSET		20
++#define ST_REAL_POS		21
++#define ST_COPY			22
+ 
+ static int
+ lzx_decode(struct lzx_stream *strm, int last)
+@@ -2474,6 +2475,8 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
+ 					ds->state = ST_RD_ALIGNED_OFFSET;
+ 				break;
+ 			}
++			/* FALL THROUGH */
++		case ST_RD_ALINE:
+ 			/*
+ 			 * Handle an Uncompressed Block.
+ 			 */
+@@ -2481,8 +2484,19 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
+ 			 * 16-bit boundary. */
+ 			if (br->cache_avail == 32 || br->cache_avail == 16)
+ 				lzx_br_consume(br, 16);
+-			else
++			else if (br->cache_avail != 0)
+ 				lzx_br_consume_unalined_bits(br);
++			else {
++				if (strm->avail_in >= 2) {
++				    strm->next_in += 2;
++					strm->avail_in -= 2;
++				} else {
++					ds->state = ST_RD_ALINE;
++					if (last)
++						goto failed;
++					return (ARCHIVE_OK);
++				}
++			}
+ 			/* Preparation to read repeated offsets R0,R1 and R2. */
+ 			ds->rbytes_avail = 0;
+ 			ds->state = ST_RD_R0;
+@@ -2507,8 +2521,7 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
+ 					lzx_br_consume(br, 16);
+ 					archive_le16enc(ds->rbytes, u16);
+ 					ds->rbytes_avail = 2;
+-				} else
+-					ds->rbytes_avail = 0;
++				}
+ 				if (ds->rbytes_avail < 4 && ds->br.have_odd) {
+ 					ds->rbytes[ds->rbytes_avail++] =
+ 					    ds->br.odd;
+@@ -2524,6 +2537,7 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
+ 					    *strm->next_in++;
+ 					strm->avail_in--;
+ 				}
++				ds->rbytes_avail = 0;
+ 				if (ds->state == ST_RD_R0) {
+ 					ds->r0 = archive_le32dec(ds->rbytes);
+ 					if (ds->r0 < 0)

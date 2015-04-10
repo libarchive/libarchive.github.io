@@ -1,0 +1,17 @@
+diff -urN --binary -x builds -x buildd libarchive_r4034.orig/tar/util.c libarchive_r4034/tar/util.c
+--- libarchive_r4034.orig/tar/util.c	2011-12-24 04:57:42.000000000 +0100
++++ libarchive_r4034/tar/util.c	2011-12-29 16:29:11.645234400 +0100
+@@ -112,6 +112,13 @@
+ 	/* Try formatting into the stack buffer. */
+ 	va_start(ap, fmt);
+ 	length = vsnprintf(fmtbuff, fmtbuff_length, fmt, ap);
++#if defined(_WIN32) && !defined(__CYGWIN__)
++	/* Under Windows, vsnprintf returns -1 */
++	if (length == -1) {
++		va_start(ap, fmt);
++		length = _vscprintf(fmt,ap);
++	}
++#endif
+ 	va_end(ap);
+ 
+ 	/* If the result was too large, allocate a buffer on the heap. */

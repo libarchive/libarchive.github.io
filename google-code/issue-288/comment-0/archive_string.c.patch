@@ -1,0 +1,12 @@
+--- libarchive/libarchive/archive_string.c.orig	Mon Mar 26 19:49:00 2012
++++ libarchive/libarchive/archive_string.c	Tue Nov 27 18:10:35 2012
+@@ -1120,8 +1120,8 @@
+ 	}
+ 	sc->to_charset = strdup(tc);
+ 	if (sc->to_charset == NULL) {
+-		free(sc);
+ 		free(sc->from_charset);
++		free(sc);
+ 		return (NULL);
+ 	}
+ 	archive_string_init(&sc->utftmp);

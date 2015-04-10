@@ -1,0 +1,108 @@
+From 8b5ab96f89a3bda3758aa94b04f46db084beb7a9 Mon Sep 17 00:00:00 2001
+From: Allan McRae <allan@archlinux.org>
+Date: Wed, 6 Jun 2012 23:44:32 +1000
+Subject: [PATCH] Fix mtree generation
+
+When generating an mtree file, libarchive writes a "Relative" type (entries
+that have no /) for files in the base directory. Any relative entry that
+describes a directory correctly changes the current directory.
+
+However, when moving onto files outside the current directory, libarchive
+does not print a "dot-dot" to change the current directory back to the
+base directory.
+
+Detect this situation and print the required dot-dot entry. Fixes Issue 264.
+
+Signed-off-by: Allan McRae <allan@archlinux.org>
+---
+ libarchive/archive_write_set_format_mtree.c |   46 +++++++++++++++++++++++++++
+ 1 file changed, 46 insertions(+)
+
+diff --git a/libarchive/archive_write_set_format_mtree.c b/libarchive/archive_write_set_format_mtree.c
+index 4b30001..a80d2c6 100644
+--- a/libarchive/archive_write_set_format_mtree.c
++++ b/libarchive/archive_write_set_format_mtree.c
+@@ -104,6 +104,7 @@ struct mtree_writer {
+ 	struct {
+ 		int		output;
+ 		int		processed;
++		struct archive_string base;
+ 		struct archive_string parent;
+ 		mode_t		type;
+ 		int		keys;
+@@ -411,6 +412,44 @@ alen:
+ #endif /* _WIN32 && !__CYGWIN__ */
+ 
+ /*
++ * Test if the base directory of the current entry is changed.
++ */
++static int
++base_dir_changed(struct archive_string *dir, struct mtree_entry *me)
++{
++	const char *path;
++	size_t l;
++	
++	l = dir_len(me);
++	
++	if (l == 0) {
++		path = me->pathname;
++		if (archive_strlen(dir) > 0) {
++			if (strcmp(dir->s, path) == 0) {
++				return(0);
++			} else {
++				if (me->filetype == AE_IFDIR) {
++					archive_strncpy(dir, path, strlen(path));
++				} else {
++					archive_string_empty(dir);
++				}
++				return (1);
++			}
++		} else {
++			if (me->filetype == AE_IFDIR) {
++				archive_strncpy(dir, path, strlen(path));
++			} else {
++				archive_string_empty(dir);
++			}
++			return (0);	
++		}
++	}
++
++	return (0);
++}
++
++
++/*
+  * Test if a parent directory of the current entry is changed.
+  */
+ static int
+@@ -998,6 +1037,9 @@ write_mtree_entries(struct archive_write *a)
+ 	int ret;
+ 
+ 	for (me = mtree->set.me_first; me; me = me->next) {
++		if (base_dir_changed(&mtree->set.base, me)) {
++			archive_string_sprintf(&mtree->buf, "..\n");
++		}
+ 		ret = write_entry(a, me);
+ 		if (ret != ARCHIVE_OK)
+ 			return (ARCHIVE_FATAL);
+@@ -1049,6 +1091,9 @@ archive_write_mtree_finish_entry(struct archive_write *a)
+ 		return (ARCHIVE_OK);
+ 	} else {
+ 		/* Write the current entry and free it. */
++		if (base_dir_changed(&mtree->set.base, me)) {
++			archive_string_sprintf(&mtree->buf, "..\n");
++		}
+ 		ret = write_entry(a, me);
+ 		free_mtree_entry(me);
+ 	}
+@@ -1249,6 +1294,7 @@ archive_write_set_format_mtree(struct archive *_a)
+ 	mtree->mtree_entry = NULL;
+ 	mtree->first = 1;
+ 	memset(&(mtree->set), 0, sizeof(mtree->set));
++	archive_string_init(&mtree->set.base);
+ 	archive_string_init(&mtree->set.parent);
+ 	mtree->keys = DEFAULT_KEYS;
+ 	mtree->dironly = 0;
+-- 
+1.7.10.3
+

@@ -1,0 +1,30 @@
+From 16d3210d0c89790813cd124236db4f8ebafc095e Mon Sep 17 00:00:00 2001
+From: Paul Barker <paul@paulbarker.me.uk>
+Date: Thu, 16 Jan 2014 15:16:31 +0000
+Subject: [PATCH] Fix out-of-tree build
+
+When building outside the source tree, the directories 'libarchive/test',
+'tar/test' and 'cpio/test' need to be created before the commands in Makefile.am
+are executed which create list.h files in these directories.
+
+Signed-off-by: Paul Barker <paul@paulbarker.me.uk>
+---
+ configure.ac | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/configure.ac b/configure.ac
+index 73944d3..e92ea25 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -785,4 +785,8 @@ case "$host_os" in
+ 	;;
+ esac
+ 
++# Ensure test directories are present if building out-of-tree
++AC_CONFIG_COMMANDS([mkdirs],
++		   [mkdir -p {libarchive,tar,cpio}/test])
++
+ AC_OUTPUT
+-- 
+1.8.5.2
+

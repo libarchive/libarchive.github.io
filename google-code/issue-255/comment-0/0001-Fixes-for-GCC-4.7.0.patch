@@ -1,0 +1,61 @@
+From 12b0d0d581409733da1931110df8cf540aba34c6 Mon Sep 17 00:00:00 2001
+From: Dan McGee <dan@archlinux.org>
+Date: Tue, 27 Mar 2012 17:22:40 -0500
+Subject: [PATCH] Fixes for GCC 4.7.0
+
+Fixes the following compile error exposed with GCC 4.7.0:
+
+    libarchive/archive_string.c: In function 'cesu8_to_unicode':
+    libarchive/archive_string.c:2450:11: error: 'wc' may be used uninitialized in this function [-Werror=uninitialized]
+    cc1: all warnings being treated as errors
+
+As well as a test failure that depends on signed integer wraparound,
+which is a very bad thing to do in C [1]. Add a bit more magic to ensure
+the assert is not optimized to always being false. This is still
+extremely brittle, and a better way should probably be figured out, but
+this ensures it works as before in all compilers.
+
+[1] http://www.gnu.org/software/autoconf/manual/autoconf-2.67/html_node/Signed-Overflow-Examples.html
+---
+ libarchive/archive_string.c              |    3 ++-
+ libarchive/test/test_read_format_mtree.c |    6 ++++--
+ 2 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/libarchive/archive_string.c b/libarchive/archive_string.c
+index 2728a37..2b56a48 100644
+--- a/libarchive/archive_string.c
++++ b/libarchive/archive_string.c
+@@ -2447,11 +2447,12 @@ combine_surrogate_pair(uint32_t uc, uint32_t uc2)
+ static int
+ cesu8_to_unicode(uint32_t *pwc, const char *s, size_t n)
+ {
+-	uint32_t wc, wc2;
++	uint32_t wc = 0;
+ 	int cnt;
+ 
+ 	cnt = _utf8_to_unicode(&wc, s, n);
+ 	if (cnt == 3 && IS_HIGH_SURROGATE_LA(wc)) {
++		uint32_t wc2 = 0;
+ 		if (n - 3 < 3) {
+ 			/* Invalid byte sequence. */
+ 			goto invalid_sequence;
+diff --git a/libarchive/test/test_read_format_mtree.c b/libarchive/test/test_read_format_mtree.c
+index 0d86bd4..d8df2ea 100644
+--- a/libarchive/test/test_read_format_mtree.c
++++ b/libarchive/test/test_read_format_mtree.c
+@@ -137,8 +137,10 @@ test_read_format_mtree1(void)
+ 	/* Verify min_time is the smallest possible time_t. */
+ 	min_time = archive_entry_mtime(ae);
+ 	assert(min_time <= 0);
+-	/* Simply asserting min_time - 1 > 0 breaks with some compiler optimizations. */
+-	t = min_time - 1;
++	/* Simply asserting min_time - 1 > 0 breaks with some compiler
++	 * optimizations. This attempts to do enough to prevent GCC optimizing the
++	 * math completely away and failing the assertion. */
++	t = (min_time - 1) >> 16;
+ 	assert(t > 0);
+ 
+ 	/* toooldfile is 1 sec older, which should overflow and get returned
+-- 
+1.7.9.5
+

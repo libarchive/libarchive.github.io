@@ -1,0 +1,82 @@
+Index: libarchive/test/test_compat_zip.c
+===================================================================
+--- libarchive/test/test_compat_zip.c	(revision 3759)
++++ libarchive/test/test_compat_zip.c	(working copy)
+@@ -62,8 +62,8 @@
+ 	assertEqualInt(archive_compression(a), ARCHIVE_COMPRESSION_NONE);
+ 	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_ZIP);
+ 
++finish:
+ 	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+-finish:
+ 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+ }
+ 
+@@ -111,6 +111,7 @@
+ 	struct archive *a;
+ 	char *p;
+ 	size_t s;
++	int r;
+ 
+ 	extract_reference_file(refname);
+ 	assert((a = archive_read_new()) != NULL);
+@@ -134,7 +135,16 @@
+ 
+ 	/* Extract under a different name. */
+ 	archive_entry_set_pathname(ae, "test_3.txt");
+-	assertEqualIntA(a, ARCHIVE_OK, archive_read_extract(a, ae, 0));
++	r = archive_read_extract(a, ae, 0);
++	if (r != ARCHIVE_OK) {
++		if (strcmp(archive_error_string(a),
++		    "libarchive compiled without deflate support (no libz)") == 0) {
++			skipping("Skipping ZIP compression check: %s",
++			    archive_error_string(a));
++			goto finish;
++		}
++	}
++	assertEqualIntA(a, ARCHIVE_OK, r);
+ 	/* Verify the first 12 bytes actually got written to disk correctly. */
+ 	p = slurpfile(&s, "test_3.txt");
+ 	assertEqualInt(s, 1030);
+@@ -142,6 +152,7 @@
+ 	free(p);
+ 
+ 	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
++finish:
+ 	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+ 	assertEqualIntA(a, ARCHIVE_OK, archive_read_free(a));
+ }
+Index: libarchive/test/test_read_format_zip.c
+===================================================================
+--- libarchive/test/test_read_format_zip.c	(revision 3759)
++++ libarchive/test/test_read_format_zip.c	(working copy)
+@@ -151,6 +151,7 @@
+ 	const char *refname = "test_read_format_zip_length_at_end.zip";
+ 	struct archive_entry *ae;
+ 	struct archive *a;
++	int r;
+ 
+ 	extract_reference_file(refname);
+ 	assert((a = archive_read_new()) != NULL);
+@@ -164,10 +165,20 @@
+ 	assert(!archive_entry_size_is_set(ae));
+ 	assertEqualInt(0, archive_entry_size(ae));
+ 
+-	assertEqualIntA(a, ARCHIVE_OK, archive_read_extract(a, ae, 0));
++	r = archive_read_extract(a, ae, 0);
++	if (r < ARCHIVE_OK) {
++		if (strcmp(archive_error_string(a),
++		    "libarchive compiled without deflate support (no libz)") == 0) {
++			skipping("Skipping ZIP compression check: %s",
++			    archive_error_string(a));
++			goto finish;
++		}
++	}
++	assertEqualIntA(a, ARCHIVE_OK, r);
+ 
+ 	assertFileContents("hello\x0A", 6, "hello.txt");
+ 
++finish:
+ 	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+ 	assertEqualIntA(a, ARCHIVE_OK, archive_read_free(a));
+ }

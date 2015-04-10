@@ -1,0 +1,221 @@
+test_read_format_rar
+
+libarchive/test/test_read_format_rar.c:42: Assertion failed: 0 == archive_read_open_file(a, reffile, 10240)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:45: Assertion failed: 0 == archive_read_next_header(a, &ae)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:46: "test.txt" != archive_entry_pathname(ae)
+                      "test.txt" = "test.txt" (length 8)
+      archive_entry_pathname(ae) = NULL
+libarchive/test/test_read_format_rar.c:47: 1309114426 != archive_entry_mtime(ae)
+      1309114426=1309114426 (0x4e07803a, 011601700072)
+      archive_entry_mtime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:48: 1309114426 != archive_entry_ctime(ae)
+      1309114426=1309114426 (0x4e07803a, 011601700072)
+      archive_entry_ctime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:49: 1309114426 != archive_entry_atime(ae)
+      1309114426=1309114426 (0x4e07803a, 011601700072)
+      archive_entry_atime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:50: 20 != archive_entry_size(ae)
+      20=20 (0x14, 024)
+      archive_entry_size(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:51: 33188 != archive_entry_mode(ae)
+      33188=33188 (0x81a4, 0100644)
+      archive_entry_mode(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:52: Assertion failed: size == archive_read_data(a, buff, size)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:53: buff != test_txt
+      size size = 20
+      Dump of buff
+0000_30_19_70_00_00_00_00_00_00_00_00_00_00_00_00_00_0.p.............
+0010_60_00_00_00_                                    `...
+      Dump of test_txt
+0000_74_65_73_74_20_74_65_78_74_20_64_6f_63_75_6d_65_test text docume
+0010_6e_74_0d_0a_                                    nt..
+
+libarchive/test/test_read_format_rar.c:56: Assertion failed: 0 == archive_read_next_header(a, &ae)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:57: "testlink" != archive_entry_pathname(ae)
+                      "testlink" = "testlink" (length 8)
+      archive_entry_pathname(ae) = NULL
+libarchive/test/test_read_format_rar.c:58: 1308922714 != archive_entry_mtime(ae)
+      1308922714=1308922714 (0x4e04935a, 011601111532)
+      archive_entry_mtime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:59: 1308922714 != archive_entry_ctime(ae)
+      1308922714=1308922714 (0x4e04935a, 011601111532)
+      archive_entry_ctime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:60: 1309103913 != archive_entry_atime(ae)
+      1309103913=1309103913 (0x4e075729, 011601653451)
+      archive_entry_atime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:61: 8 != archive_entry_size(ae)
+      8=8 (0x8, 010)
+      archive_entry_size(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:62: 41471 != archive_entry_mode(ae)
+      41471=41471 (0xa1ff, 0120777)
+      archive_entry_mode(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:63: "test.txt" != archive_entry_symlink(ae)
+                     "test.txt" = "test.txt" (length 8)
+      archive_entry_symlink(ae) = NULL
+libarchive/test/test_read_format_rar.c:66: Assertion failed: 0 == archive_read_next_header(a, &ae)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:67: "testdir/test.txt" != archive_entry_pathname(ae)
+              "testdir/test.txt" = "testdir/test.txt" (length 16)
+      archive_entry_pathname(ae) = NULL
+libarchive/test/test_read_format_rar.c:68: 1309114747 != archive_entry_mtime(ae)
+      1309114747=1309114747 (0x4e07817b, 011601700573)
+      archive_entry_mtime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:69: 1309114747 != archive_entry_ctime(ae)
+      1309114747=1309114747 (0x4e07817b, 011601700573)
+      archive_entry_ctime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:70: 1309114747 != archive_entry_atime(ae)
+      1309114747=1309114747 (0x4e07817b, 011601700573)
+      archive_entry_atime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:71: 20 != archive_entry_size(ae)
+      20=20 (0x14, 024)
+      archive_entry_size(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:72: 33188 != archive_entry_mode(ae)
+      33188=33188 (0x81a4, 0100644)
+      archive_entry_mode(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:73: Assertion failed: size == archive_read_data(a, buff, size)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:74: buff != test_txt
+      size size = 20
+      Dump of buff
+0000_30_19_70_00_00_00_00_00_00_00_00_00_00_00_00_00_0.p.............
+0010_60_00_00_00_                                    `...
+      Dump of test_txt
+0000_74_65_73_74_20_74_65_78_74_20_64_6f_63_75_6d_65_test text docume
+0010_6e_74_0d_0a_                                    nt..
+
+libarchive/test/test_read_format_rar.c:77: Assertion failed: 0 == archive_read_next_header(a, &ae)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:78: "testdir" != archive_entry_pathname(ae)
+                       "testdir" = "testdir" (length 7)
+      archive_entry_pathname(ae) = NULL
+libarchive/test/test_read_format_rar.c:79: 1309114747 != archive_entry_mtime(ae)
+      1309114747=1309114747 (0x4e07817b, 011601700573)
+      archive_entry_mtime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:80: 1309114747 != archive_entry_ctime(ae)
+      1309114747=1309114747 (0x4e07817b, 011601700573)
+      archive_entry_ctime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:81: 1309114749 != archive_entry_atime(ae)
+      1309114749=1309114749 (0x4e07817d, 011601700575)
+      archive_entry_atime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:83: 16877 != archive_entry_mode(ae)
+      16877=16877 (0x41ed, 040755)
+      archive_entry_mode(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:86: Assertion failed: 0 == archive_read_next_header(a, &ae)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:87: "testemptydir" != archive_entry_pathname(ae)
+                  "testemptydir" = "testemptydir" (length 12)
+      archive_entry_pathname(ae) = NULL
+libarchive/test/test_read_format_rar.c:88: 1308706139 != archive_entry_mtime(ae)
+      1308706139=1308706139 (0x4e01455b, 011600242533)
+      archive_entry_mtime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:89: 1308706139 != archive_entry_ctime(ae)
+      1308706139=1308706139 (0x4e01455b, 011600242533)
+      archive_entry_ctime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:90: 1309103170 != archive_entry_atime(ae)
+      1309103170=1309103170 (0x4e075442, 011601652102)
+      archive_entry_atime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:92: 16877 != archive_entry_mode(ae)
+      16877=16877 (0x41ed, 040755)
+      archive_entry_mode(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:95: Assertion failed: 1 == archive_read_next_header(a, &ae)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:96: 5 != archive_file_count(a)
+      5=5 (0x5, 05)
+      archive_file_count(a)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:115: Assertion failed: 0 == archive_read_open_file(a, reffile, 10240)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:118: Assertion failed: 0 == archive_read_next_header(a, &ae)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:119: "test.txt" != archive_entry_pathname(ae)
+                      "test.txt" = "test.txt" (length 8)
+      archive_entry_pathname(ae) = NULL
+libarchive/test/test_read_format_rar.c:120: 1309114426 != archive_entry_mtime(ae)
+      1309114426=1309114426 (0x4e07803a, 011601700072)
+      archive_entry_mtime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:121: 1309114426 != archive_entry_ctime(ae)
+      1309114426=1309114426 (0x4e07803a, 011601700072)
+      archive_entry_ctime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:122: 1309114426 != archive_entry_atime(ae)
+      1309114426=1309114426 (0x4e07803a, 011601700072)
+      archive_entry_atime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:123: 20 != archive_entry_size(ae)
+      20=20 (0x14, 024)
+      archive_entry_size(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:124: 33188 != archive_entry_mode(ae)
+      33188=33188 (0x81a4, 0100644)
+      archive_entry_mode(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:125: Assertion failed: size == archive_read_data(a, buff, size)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:126: buff != test_txt
+      size size = 20
+      Dump of buff
+0000_30_19_70_00_00_00_00_00_00_00_00_00_00_00_00_00_0.p.............
+0010_60_00_00_00_                                    `...
+      Dump of test_txt
+0000_74_65_73_74_20_74_65_78_74_20_64_6f_63_75_6d_65_test text docume
+0010_6e_74_0d_0a_                                    nt..
+
+libarchive/test/test_read_format_rar.c:129: Assertion failed: 1 == archive_read_next_header(a, &ae)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:130: 1 != archive_file_count(a)
+      1=1 (0x1, 01)
+      archive_file_count(a)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:149: Assertion failed: 0 == archive_read_open_file(a, reffile, 10240)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:152: Assertion failed: 0 == archive_read_next_header(a, &ae)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:153: "test.txt" != archive_entry_pathname(ae)
+                      "test.txt" = "test.txt" (length 8)
+      archive_entry_pathname(ae) = NULL
+libarchive/test/test_read_format_rar.c:154: 1309114426 != archive_entry_mtime(ae)
+      1309114426=1309114426 (0x4e07803a, 011601700072)
+      archive_entry_mtime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:155: 1309114426 != archive_entry_ctime(ae)
+      1309114426=1309114426 (0x4e07803a, 011601700072)
+      archive_entry_ctime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:156: 1309114426 != archive_entry_atime(ae)
+      1309114426=1309114426 (0x4e07803a, 011601700072)
+      archive_entry_atime(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:157: 20 != archive_entry_size(ae)
+      20=20 (0x14, 024)
+      archive_entry_size(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:158: 33188 != archive_entry_mode(ae)
+      33188=33188 (0x81a4, 0100644)
+      archive_entry_mode(ae)=0 (0x0, 00)
+libarchive/test/test_read_format_rar.c:159: Assertion failed: size == archive_read_data(a, buff, size)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:160: buff != test_txt
+      size size = 20
+      Dump of buff
+0000_30_19_70_00_00_00_00_00_00_00_00_00_00_00_00_00_0.p.............
+0010_60_00_00_00_                                    `...
+      Dump of test_txt
+0000_74_65_73_74_20_74_65_78_74_20_64_6f_63_75_6d_65_test text docume
+0010_6e_74_0d_0a_                                    nt..
+
+libarchive/test/test_read_format_rar.c:163: Assertion failed: 1 == archive_read_next_header(a, &ae)
+    errno: 84
+   detail: Unrecognized archive format
+libarchive/test/test_read_format_rar.c:164: 1 != archive_file_count(a)
+      1=1 (0x1, 01)
+      archive_file_count(a)=0 (0x0, 00)

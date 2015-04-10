@@ -1,0 +1,17 @@
+diff --git a/libarchive/archive_read.c b/libarchive/archive_read.c
+index 048c316..71ddc53 100644
+--- a/libarchive/archive_read.c
++++ b/libarchive/archive_read.c
+@@ -230,8 +230,11 @@ client_seek_proxy(struct archive_read_filter *self, int64_t offset, int whence)
+ 	 * other libarchive code that assumes a successful forward
+ 	 * seek means it can also seek backwards.
+ 	 */
+-	if (self->archive->client.seeker == NULL)
++	if (self->archive->client.seeker == NULL) {
++		archive_set_error(&self->archive->archive, ARCHIVE_ERRNO_PROGRAMMER,
++			"Seek callback not defined: consider using archive_seek_callback");
+ 		return (ARCHIVE_FAILED);
++	}
+ 	return (self->archive->client.seeker)(&self->archive->archive,
+ 	    self->data, offset, whence);
+ }

@@ -1,0 +1,24 @@
+# HG changeset patch
+# User Roman Neuhauser <neuhauser@sigpipe.cz>
+# Date 1298394694 -3600
+# Node ID a353c29ace81007e56b0dd7c7a5fcd8393fbdaef
+# Parent  0c4d7bbea31e9417f4092d3d1baf6ea21b16bbc8
+align build/autogen.sh with INSTALL, ends with automake by default
+
+the rest is available with --full
+
+diff --git a/build/autogen.sh b/build/autogen.sh
+--- a/build/autogen.sh
++++ b/build/autogen.sh
+@@ -61,6 +61,10 @@
+ autoheader
+ automake -a -c
+ 
++if test "x$1" != x--full; then
++    exit
++fi
++
+ ./configure
+ make distcheck
+ make dist-zip
+\ No newline at end of file

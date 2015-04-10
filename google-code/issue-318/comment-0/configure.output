@@ -1,0 +1,532 @@
+pi@raspberrypi /tmp/libarchive-libarchive-6b3531f $ ./configure 
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether build environment is sane... yes
+checking for a thread-safe mkdir -p... /bin/mkdir -p
+checking for gawk... no
+checking for mawk... mawk
+checking whether make sets $(MAKE)... yes
+checking whether make supports nested variables... yes
+checking build system type... armv6l-unknown-linux-gnueabihf
+checking host system type... armv6l-unknown-linux-gnueabihf
+checking for gcc... gcc
+checking whether the C compiler works... yes
+checking for C compiler default output file name... a.out
+checking for suffix of executables... 
+checking whether we are cross compiling... no
+checking for suffix of object files... o
+checking whether we are using the GNU C compiler... yes
+checking whether gcc accepts -g... yes
+checking for gcc option to accept ISO C89... none needed
+checking for style of include used by make... GNU
+checking dependency style of gcc... gcc3
+checking whether gcc and cc understand -c and -o together... yes
+checking how to run the C preprocessor... gcc -E
+checking for grep that handles long lines and -e... /bin/grep
+checking for egrep... /bin/grep -E
+checking for ANSI C header files... yes
+checking for sys/types.h... yes
+checking for sys/stat.h... yes
+checking for stdlib.h... yes
+checking for string.h... yes
+checking for memory.h... yes
+checking for strings.h... yes
+checking for inttypes.h... yes
+checking for stdint.h... yes
+checking for unistd.h... yes
+checking minix/config.h usability... no
+checking minix/config.h presence... no
+checking for minix/config.h... no
+checking whether it is safe to define __EXTENSIONS__... yes
+checking how to print strings... printf
+checking for a sed that does not truncate output... /bin/sed
+checking for fgrep... /bin/grep -F
+checking for ld used by gcc... /usr/bin/ld
+checking if the linker (/usr/bin/ld) is GNU ld... yes
+checking for BSD- or MS-compatible name lister (nm)... /usr/bin/nm -B
+checking the name lister (/usr/bin/nm -B) interface... BSD nm
+checking whether ln -s works... yes
+checking the maximum length of command line arguments... 1572864
+checking whether the shell understands some XSI constructs... yes
+checking whether the shell understands "+="... yes
+checking how to convert armv6l-unknown-linux-gnueabihf file names to
+armv6l-unknown-linux-gnueabihf format... func_convert_file_noop
+checking how to convert armv6l-unknown-linux-gnueabihf file names to
+toolchain format... func_convert_file_noop
+checking for /usr/bin/ld option to reload object files... -r
+checking for objdump... objdump
+checking how to recognize dependent libraries... pass_all
+checking for dlltool... dlltool
+checking how to associate runtime and link libraries... printf %s\n
+checking for ar... ar
+checking for archiver @FILE support... @
+checking for strip... strip
+checking for ranlib... ranlib
+checking command to parse /usr/bin/nm -B output from gcc object... ok
+checking for sysroot... no
+checking for mt... mt
+checking if mt is a manifest tool... no
+checking for dlfcn.h... yes
+checking for objdir... .libs
+checking if gcc supports -fno-rtti -fno-exceptions... no
+checking for gcc option to produce PIC... -fPIC -DPIC
+checking if gcc PIC flag -fPIC -DPIC works... yes
+checking if gcc static flag -static works... yes
+checking if gcc supports -c -o file.o... yes
+checking if gcc supports -c -o file.o... (cached) yes
+checking whether the gcc linker (/usr/bin/ld) supports shared libraries...
+yes
+checking whether -lc should be explicitly linked in... no
+checking dynamic linker characteristics... GNU/Linux ld.so
+checking how to hardcode library paths into programs... immediate
+checking whether stripping libraries is possible... yes
+checking if libtool supports shared libraries... yes
+checking whether to build shared libraries... yes
+checking whether to build static libraries... yes
+checking for strip... (cached) strip
+checking for dirent.h that defines DIR... yes
+checking for library containing opendir... none required
+checking for sys/wait.h that is POSIX.1 compatible... yes
+checking acl/libacl.h usability... no
+checking acl/libacl.h presence... no
+checking for acl/libacl.h... no
+checking attr/xattr.h usability... no
+checking attr/xattr.h presence... no
+checking for attr/xattr.h... no
+checking copyfile.h usability... no
+checking copyfile.h presence... no
+checking for copyfile.h... no
+checking ctype.h usability... yes
+checking ctype.h presence... yes
+checking for ctype.h... yes
+checking errno.h usability... yes
+checking errno.h presence... yes
+checking for errno.h... yes
+checking ext2fs/ext2_fs.h usability... no
+checking ext2fs/ext2_fs.h presence... no
+checking for ext2fs/ext2_fs.h... no
+checking fcntl.h usability... yes
+checking fcntl.h presence... yes
+checking for fcntl.h... yes
+checking grp.h usability... yes
+checking grp.h presence... yes
+checking for grp.h... yes
+checking whether EXT2_IOC_GETFLAGS is usable... no
+checking for inttypes.h... (cached) yes
+checking io.h usability... no
+checking io.h presence... no
+checking for io.h... no
+checking langinfo.h usability... yes
+checking langinfo.h presence... yes
+checking for langinfo.h... yes
+checking limits.h usability... yes
+checking limits.h presence... yes
+checking for limits.h... yes
+checking linux/fiemap.h usability... yes
+checking linux/fiemap.h presence... yes
+checking for linux/fiemap.h... yes
+checking linux/fs.h usability... yes
+checking linux/fs.h presence... yes
+checking for linux/fs.h... yes
+checking linux/magic.h usability... yes
+checking linux/magic.h presence... yes
+checking for linux/magic.h... yes
+checking linux/types.h usability... yes
+checking linux/types.h presence... yes
+checking for linux/types.h... yes
+checking locale.h usability... yes
+checking locale.h presence... yes
+checking for locale.h... yes
+checking paths.h usability... yes
+checking paths.h presence... yes
+checking for paths.h... yes
+checking poll.h usability... yes
+checking poll.h presence... yes
+checking for poll.h... yes
+checking pwd.h usability... yes
+checking pwd.h presence... yes
+checking for pwd.h... yes
+checking signal.h usability... yes
+checking signal.h presence... yes
+checking for signal.h... yes
+checking spawn.h usability... yes
+checking spawn.h presence... yes
+checking for spawn.h... yes
+checking stdarg.h usability... yes
+checking stdarg.h presence... yes
+checking for stdarg.h... yes
+checking for stdint.h... (cached) yes
+checking for stdlib.h... (cached) yes
+checking for string.h... (cached) yes
+checking sys/acl.h usability... no
+checking sys/acl.h presence... no
+checking for sys/acl.h... no
+checking sys/cdefs.h usability... yes
+checking sys/cdefs.h presence... yes
+checking for sys/cdefs.h... yes
+checking sys/extattr.h usability... no
+checking sys/extattr.h presence... no
+checking for sys/extattr.h... no
+checking sys/ioctl.h usability... yes
+checking sys/ioctl.h presence... yes
+checking for sys/ioctl.h... yes
+checking sys/mkdev.h usability... no
+checking sys/mkdev.h presence... no
+checking for sys/mkdev.h... no
+checking sys/mount.h usability... yes
+checking sys/mount.h presence... yes
+checking for sys/mount.h... yes
+checking sys/param.h usability... yes
+checking sys/param.h presence... yes
+checking for sys/param.h... yes
+checking sys/poll.h usability... yes
+checking sys/poll.h presence... yes
+checking for sys/poll.h... yes
+checking sys/select.h usability... yes
+checking sys/select.h presence... yes
+checking for sys/select.h... yes
+checking sys/statfs.h usability... yes
+checking sys/statfs.h presence... yes
+checking for sys/statfs.h... yes
+checking sys/statvfs.h usability... yes
+checking sys/statvfs.h presence... yes
+checking for sys/statvfs.h... yes
+checking sys/time.h usability... yes
+checking sys/time.h presence... yes
+checking for sys/time.h... yes
+checking sys/utime.h usability... no
+checking sys/utime.h presence... no
+checking for sys/utime.h... no
+checking sys/utsname.h usability... yes
+checking sys/utsname.h presence... yes
+checking for sys/utsname.h... yes
+checking sys/vfs.h usability... yes
+checking sys/vfs.h presence... yes
+checking for sys/vfs.h... yes
+checking time.h usability... yes
+checking time.h presence... yes
+checking for time.h... yes
+checking for unistd.h... (cached) yes
+checking utime.h usability... yes
+checking utime.h presence... yes
+checking for utime.h... yes
+checking wchar.h usability... yes
+checking wchar.h presence... yes
+checking for wchar.h... yes
+checking wctype.h usability... yes
+checking wctype.h presence... yes
+checking for wctype.h... yes
+checking windows.h usability... no
+checking windows.h presence... no
+checking for windows.h... no
+checking for wincrypt.h... no
+checking for winioctl.h... no
+checking zlib.h usability... yes
+checking zlib.h presence... yes
+checking for zlib.h... yes
+checking for inflate in -lz... yes
+checking bzlib.h usability... no
+checking bzlib.h presence... no
+checking for bzlib.h... no
+checking for BZ2_bzDecompressInit in -lbz2... no
+checking lzmadec.h usability... no
+checking lzmadec.h presence... no
+checking for lzmadec.h... no
+checking for lzmadec_decode in -llzmadec... no
+checking for ld used by GCC... /usr/bin/ld
+checking if the linker (/usr/bin/ld) is GNU ld... yes
+checking for shared library run path origin... done
+checking for iconv... yes
+checking for working iconv... yes
+checking for iconv declaration... 
+         extern size_t iconv (iconv_t cd, char * *inbuf, size_t
+*inbytesleft, char * *outbuf, size_t *outbytesleft);
+checking for iconv.h... yes
+checking localcharset.h usability... no
+checking localcharset.h presence... no
+checking for localcharset.h... no
+checking for locale_charset... no
+checking for locale_charset in -lcharset... no
+checking lzma.h usability... no
+checking lzma.h presence... no
+checking for lzma.h... no
+checking for lzma_stream_decoder in -llzma... no
+checking lzo/lzoconf.h usability... no
+checking lzo/lzoconf.h presence... no
+checking for lzo/lzoconf.h... no
+checking lzo/lzo1x.h usability... no
+checking lzo/lzo1x.h presence... no
+checking for lzo/lzo1x.h... no
+checking for lzo1x_decompress_safe in -llzo2... no
+checking for xml2-config... no
+checking for xmlInitParser in -lxml2... no
+checking libxml/xmlreader.h usability... no
+checking libxml/xmlreader.h presence... no
+checking for libxml/xmlreader.h... no
+checking libxml/xmlwriter.h usability... no
+checking libxml/xmlwriter.h presence... no
+checking for libxml/xmlwriter.h... no
+checking expat.h usability... no
+checking expat.h presence... no
+checking for expat.h... no
+checking for XML_ParserCreate in -lexpat... no
+checking regex.h usability... yes
+checking regex.h presence... yes
+checking for regex.h... yes
+checking for regcomp... yes
+checking for an ANSI C-conforming const... yes
+checking for uid_t in sys/types.h... yes
+checking for mode_t... yes
+checking for off_t... yes
+checking for size_t... yes
+checking for id_t... yes
+checking for uintptr_t... yes
+checking for struct tm.tm_gmtoff... yes
+checking for struct tm.__tm_gmtoff... no
+checking for struct statfs.f_namemax... no
+checking for struct statvfs.f_iosize... no
+checking for struct stat.st_birthtime... no
+checking for struct stat.st_birthtimespec.tv_nsec... no
+checking for struct stat.st_mtimespec.tv_nsec... no
+checking for struct stat.st_mtim.tv_nsec... yes
+checking for struct stat.st_mtime_n... no
+checking for struct stat.st_umtime... no
+checking for struct stat.st_mtime_usec... no
+checking for struct stat.st_blksize... yes
+checking for struct stat.st_flags... no
+checking for uintmax_t... yes
+checking for unsigned long long... yes
+checking for unsigned long long int... yes
+checking for long long int... yes
+checking for intmax_t... yes
+checking for uintmax_t... (cached) yes
+checking for int64_t... yes
+checking for uint64_t... yes
+checking for int32_t... yes
+checking for uint32_t... yes
+checking for int16_t... yes
+checking for uint16_t... yes
+checking for uint8_t... yes
+checking whether SIZE_MAX is declared... yes
+checking whether INT64_MAX is declared... yes
+checking whether INT64_MIN is declared... yes
+checking whether UINT64_MAX is declared... yes
+checking whether UINT32_MAX is declared... yes
+checking whether SSIZE_MAX is declared... yes
+checking whether EFTYPE is declared... no
+checking whether EILSEQ is declared... yes
+checking for wchar_t... yes
+checking size of wchar_t... 4
+checking whether time.h and sys/time.h may both be included... yes
+checking whether gcc needs -traditional... no
+checking whether sys/types.h defines makedev... yes
+checking for _LARGEFILE_SOURCE value needed for large files... no
+checking for working memcmp... yes
+checking whether lstat correctly handles trailing slash... yes
+checking whether lstat accepts an empty string... no
+checking whether stat accepts an empty string... no
+checking whether strerror_r is declared... yes
+checking for strerror_r... yes
+checking whether strerror_r returns char *... yes
+checking for strftime... yes
+checking for vprintf... yes
+checking for _doprnt... no
+checking for CreateHardLinkA... no
+checking for chflags... no
+checking for chown... yes
+checking for chroot... yes
+checking for ctime_r... yes
+checking for dirfd... yes
+checking for fchdir... yes
+checking for fchflags... no
+checking for fchmod... yes
+checking for fchown... yes
+checking for fcntl... yes
+checking for fdopendir... yes
+checking for fork... yes
+checking for fstat... yes
+checking for fstatat... yes
+checking for fstatfs... yes
+checking for fstatvfs... yes
+checking for ftruncate... yes
+checking for futimens... yes
+checking for futimes... yes
+checking for futimesat... yes
+checking for geteuid... yes
+checking for getpid... yes
+checking for getgrgid_r... yes
+checking for getgrnam_r... yes
+checking for getpwnam_r... yes
+checking for getpwuid_r... yes
+checking for getvfsbyname... no
+checking for gmtime_r... yes
+checking for lchflags... no
+checking for lchmod... no
+checking for lchown... yes
+checking for link... yes
+checking for localtime_r... yes
+checking for lstat... yes
+checking for lutimes... yes
+checking for mbrtowc... yes
+checking for memmove... yes
+checking for memset... yes
+checking for mkdir... yes
+checking for mkfifo... yes
+checking for mknod... yes
+checking for mkstemp... yes
+checking for nl_langinfo... yes
+checking for openat... yes
+checking for pipe... yes
+checking for poll... yes
+checking for posix_spawnp... yes
+checking for readlink... yes
+checking for readlinkat... yes
+checking for select... yes
+checking for setenv... yes
+checking for setlocale... yes
+checking for sigaction... yes
+checking for statfs... yes
+checking for statvfs... yes
+checking for strchr... yes
+checking for strdup... yes
+checking for strerror... yes
+checking for strncpy_s... no
+checking for strrchr... yes
+checking for symlink... yes
+checking for timegm... yes
+checking for tzset... yes
+checking for unsetenv... yes
+checking for utime... yes
+checking for utimensat... yes
+checking for utimes... yes
+checking for vfork... yes
+checking for wcrtomb... yes
+checking for wcscmp... yes
+checking for wcscpy... yes
+checking for wcslen... yes
+checking for wctomb... yes
+checking for wmemcmp... yes
+checking for wmemcpy... yes
+checking for _ctime64_s... no
+checking for _fseeki64... no
+checking for _get_timezone... no
+checking for _localtime64_s... no
+checking for _mkgmtime64... no
+checking for cygwin_conv_path... no
+checking whether D_MD_ORDER is declared... no
+checking for struct dirent.d_namlen... no
+checking for attr/xattr.h... (cached) no
+checking sys/xattr.h usability... yes
+checking sys/xattr.h presence... yes
+checking for sys/xattr.h... yes
+checking sys/ea.h usability... no
+checking sys/ea.h presence... no
+checking for sys/ea.h... no
+checking for setxattr in -lattr... no
+checking for extattr_get_file... no
+checking for extattr_list_file... no
+checking for extattr_set_fd... no
+checking for extattr_set_file... no
+checking for fgetxattr... yes
+checking for flistxattr... yes
+checking for fsetxattr... yes
+checking for getxattr... yes
+checking for lgetxattr... yes
+checking for listxattr... yes
+checking for llistxattr... yes
+checking for lsetxattr... yes
+checking for fgetea... no
+checking for flistea... no
+checking for fsetea... no
+checking for getea... no
+checking for lgetea... no
+checking for listea... no
+checking for llistea... no
+checking for lsetea... no
+checking whether EXTATTR_NAMESPACE_USER is declared... no
+checking for sys/acl.h... (cached) no
+checking for acl_get_file in -lacl... no
+checking for acl_create_entry... no
+checking for acl_init... no
+checking for acl_set_fd... no
+checking for acl_set_fd_np... no
+checking for acl_set_file... no
+checking for acl_permset_t... no
+checking for acl_get_perm_np... no
+checking for acl_get_perm... no
+checking for acl_get_link... no
+checking for acl_get_link_np... no
+checking whether ACL_USER is declared... no
+checking for special C compiler options needed for large files... no
+checking for _FILE_OFFSET_BITS value needed for large files... 64
+checking support for ARCHIVE_CRYPTO_MD5_LIBC... no
+checking support for ARCHIVE_CRYPTO_MD5_LIBSYSTEM... no
+checking support for ARCHIVE_CRYPTO_RMD160_LIBC... no
+checking support for ARCHIVE_CRYPTO_SHA1_LIBC... no
+checking support for ARCHIVE_CRYPTO_SHA1_LIBSYSTEM... no
+checking support for ARCHIVE_CRYPTO_SHA256_LIBC... no
+checking support for ARCHIVE_CRYPTO_SHA256_LIBC2... no
+checking support for ARCHIVE_CRYPTO_SHA256_LIBC3... no
+checking support for ARCHIVE_CRYPTO_SHA256_LIBSYSTEM... no
+checking support for ARCHIVE_CRYPTO_SHA384_LIBC... no
+checking support for ARCHIVE_CRYPTO_SHA384_LIBC2... no
+checking support for ARCHIVE_CRYPTO_SHA384_LIBC3... no
+checking support for ARCHIVE_CRYPTO_SHA384_LIBSYSTEM... no
+checking support for ARCHIVE_CRYPTO_SHA512_LIBC... no
+checking support for ARCHIVE_CRYPTO_SHA512_LIBC2... no
+checking support for ARCHIVE_CRYPTO_SHA512_LIBC3... no
+checking support for ARCHIVE_CRYPTO_SHA512_LIBSYSTEM... no
+checking nettle/md5.h usability... no
+checking nettle/md5.h presence... no
+checking for nettle/md5.h... no
+checking nettle/ripemd160.h usability... no
+checking nettle/ripemd160.h presence... no
+checking for nettle/ripemd160.h... no
+checking nettle/sha.h usability... no
+checking nettle/sha.h presence... no
+checking for nettle/sha.h... no
+checking for main in -lnettle... no
+checking support for ARCHIVE_CRYPTO_MD5_NETTLE... no
+checking support for ARCHIVE_CRYPTO_RMD160_NETTLE... no
+checking support for ARCHIVE_CRYPTO_SHA1_NETTLE... no
+checking support for ARCHIVE_CRYPTO_SHA256_NETTLE... no
+checking support for ARCHIVE_CRYPTO_SHA384_NETTLE... no
+checking support for ARCHIVE_CRYPTO_SHA512_NETTLE... no
+checking openssl/evp.h usability... no
+checking openssl/evp.h presence... no
+checking for openssl/evp.h... no
+checking for main in -lcrypto... no
+checking support for ARCHIVE_CRYPTO_MD5_OPENSSL... no
+checking support for ARCHIVE_CRYPTO_RMD160_OPENSSL... no
+checking support for ARCHIVE_CRYPTO_SHA1_OPENSSL... no
+checking support for ARCHIVE_CRYPTO_SHA256_OPENSSL... no
+checking support for ARCHIVE_CRYPTO_SHA384_OPENSSL... no
+checking support for ARCHIVE_CRYPTO_SHA512_OPENSSL... no
+checking md5.h usability... no
+checking md5.h presence... no
+checking for md5.h... no
+checking ripemd.h usability... no
+checking ripemd.h presence... no
+checking for ripemd.h... no
+checking sha.h usability... no
+checking sha.h presence... no
+checking for sha.h... no
+checking sha256.h usability... no
+checking sha256.h presence... no
+checking for sha256.h... no
+checking sha512.h usability... no
+checking sha512.h presence... no
+checking for sha512.h... no
+checking for main in -lmd... no
+checking support for ARCHIVE_CRYPTO_MD5_LIBMD... no
+checking support for ARCHIVE_CRYPTO_RMD160_LIBMD... no
+checking support for ARCHIVE_CRYPTO_SHA1_LIBMD... no
+checking support for ARCHIVE_CRYPTO_SHA256_LIBMD... no
+checking support for ARCHIVE_CRYPTO_SHA512_LIBMD... no
+configure: creating ./config.status
+config.status: creating Makefile
+config.status: creating build/pkgconfig/libarchive.pc
+config.status: creating config.h
+config.status: config.h is unchanged
+config.status: executing depfiles commands
+config.status: executing libtool commands
+pi@raspberrypi /tmp/libarchive-libarchive-6b3531f $

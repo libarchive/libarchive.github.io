@@ -1,0 +1,12 @@
+Index: libarchive/archive_read_support_format_mtree.c
+===================================================================
+--- libarchive/archive_read_support_format_mtree.c	(revision 2811)
++++ libarchive/archive_read_support_format_mtree.c	(working copy)
+@@ -525,6 +525,7 @@
+ 	/* Initialize reasonable defaults. */
+ 	mtree->filetype = AE_IFREG;
+ 	archive_entry_set_size(entry, 0);
++	archive_string_empty(&mtree->contents_name);
+ 
+ 	/* Parse options from this line. */
+ 	parsed_kws = 0;

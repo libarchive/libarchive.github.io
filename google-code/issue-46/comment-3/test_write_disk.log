@@ -1,0 +1,11 @@
+test_write_disk
+
+/boot/home/libarchive/libarchive/test/test_write_disk.c:56: st.st_mode != archive_entry_mode(ae) & ~UMASK
+   Description: st.st_mode=100040555 archive_entry_mode(ae)=40555
+      st.st_mode=16793965 (0x100416d, 0100040555)
+      archive_entry_mode(ae) & ~UMASK=16749 (0x416d, 040555)
+/boot/home/libarchive/libarchive/test/test_write_disk.c:56: st.st_mode != archive_entry_mode(ae) & ~UMASK
+   Description: st.st_mode=100040740 archive_entry_mode(ae)=40742
+      st.st_mode=16794080 (0x10041e0, 0100040740)
+      archive_entry_mode(ae) & ~UMASK=16864 (0x41e0, 040740)
+/boot/home/libarchive/libarchive/test/test_write_disk.c:56: Summary: Failed 2 times

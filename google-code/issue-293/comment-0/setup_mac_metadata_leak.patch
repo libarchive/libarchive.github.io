@@ -1,0 +1,34 @@
+From 3c7c8a01fca595050aac6471d5d0ac667b5809e2 Mon Sep 17 00:00:00 2001
+From: Kal Conley <kcconley@gmail.com>
+Date: Tue, 18 Dec 2012 13:07:45 +0100
+Subject: [PATCH] Fixed leak in setup_mac_metadata.
+
+---
+ libarchive/archive_read_disk_entry_from_file.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/libarchive/archive_read_disk_entry_from_file.c b/libarchive/archive_read_disk_entry_from_file.c
+index 8b0c365..c74383a 100644
+--- a/libarchive/archive_read_disk_entry_from_file.c
++++ b/libarchive/archive_read_disk_entry_from_file.c
+@@ -292,7 +292,7 @@ setup_mac_metadata(struct archive_read_disk *a,
+ 	int copyfile_flags = COPYFILE_NOFOLLOW | COPYFILE_ACL | COPYFILE_XATTR;
+ 	struct stat copyfile_stat;
+ 	int ret = ARCHIVE_OK;
+-	void *buff;
++	void *buff = NULL;
+ 	int have_attrs;
+ 	const char *name, *tempdir;
+ 	struct archive_string tempfile;
+@@ -378,6 +378,8 @@ cleanup:
+ 		close(tempfd);
+ 		unlink(tempfile.s);
+ 	}
++	if (buff != NULL)
++		free(buff);
+ 	archive_string_free(&tempfile);
+ 	return (ret);
+ }
+-- 
+1.7.12.3
+

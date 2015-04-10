@@ -1,0 +1,233 @@
+Index: tar/read.c
+===================================================================
+--- tar/read.c	(revision 1693)
++++ tar/read.c	(working copy)
+@@ -152,7 +152,7 @@
+ 		archive_read_support_compression_all(a);
+ 	archive_read_support_format_all(a);
+ 	if (ARCHIVE_OK != archive_read_set_options(a, bsdtar->option_options))
+-		lafe_errc(1, 0, archive_error_string(a));
++		lafe_errc(1, 0, "%s", archive_error_string(a));
+ 	if (archive_read_open_file(a, bsdtar->filename,
+ 	    bsdtar->bytes_per_block != 0 ? bsdtar->bytes_per_block :
+ 	    DEFAULT_BYTES_PER_BLOCK))
+Index: tar/write.c
+===================================================================
+--- tar/write.c	(revision 1693)
++++ tar/write.c	(working copy)
+@@ -231,9 +231,9 @@
+ 	}
+ 
+ 	if (ARCHIVE_OK != archive_write_set_options(a, bsdtar->option_options))
+-		lafe_errc(1, 0, archive_error_string(a));
++		lafe_errc(1, 0, "%s", archive_error_string(a));
+ 	if (ARCHIVE_OK != archive_write_open_file(a, bsdtar->filename))
+-		lafe_errc(1, 0, archive_error_string(a));
++		lafe_errc(1, 0, "%s", archive_error_string(a));
+ 	write_archive(a, bsdtar);
+ }
+ 
+@@ -321,9 +321,9 @@
+ 	if (lseek(bsdtar->fd, end_offset, SEEK_SET) < 0)
+ 		lafe_errc(1, errno, "Could not seek to archive end");
+ 	if (ARCHIVE_OK != archive_write_set_options(a, bsdtar->option_options))
+-		lafe_errc(1, 0, archive_error_string(a));
++		lafe_errc(1, 0, "%s", archive_error_string(a));
+ 	if (ARCHIVE_OK != archive_write_open_fd(a, bsdtar->fd))
+-		lafe_errc(1, 0, archive_error_string(a));
++		lafe_errc(1, 0, "%s", archive_error_string(a));
+ 
+ 	write_archive(a, bsdtar); /* XXX check return val XXX */
+ 
+@@ -404,9 +404,9 @@
+ 	if (lseek(bsdtar->fd, end_offset, SEEK_SET) < 0)
+ 		lafe_errc(1, errno, "Could not seek to archive end");
+ 	if (ARCHIVE_OK != archive_write_set_options(a, bsdtar->option_options))
+-		lafe_errc(1, 0, archive_error_string(a));
++		lafe_errc(1, 0, "%s", archive_error_string(a));
+ 	if (ARCHIVE_OK != archive_write_open_fd(a, bsdtar->fd))
+-		lafe_errc(1, 0, archive_error_string(a));
++		lafe_errc(1, 0, "%s", archive_error_string(a));
+ 
+ 	write_archive(a, bsdtar);
+ 
+@@ -455,7 +455,7 @@
+ 				bsdtar->argv++;
+ 				arg = *bsdtar->argv;
+ 				if (arg == NULL) {
+-					lafe_warnc(1, 0,
++					lafe_warnc(0, "%s",
+ 					    "Missing argument for -C");
+ 					bsdtar->return_value = 1;
+ 					goto cleanup;
+@@ -818,7 +818,7 @@
+ 		    entry, -1, st);
+ 		if (r != ARCHIVE_OK)
+ 			lafe_warnc(archive_errno(bsdtar->diskreader),
+-			    archive_error_string(bsdtar->diskreader));
++			    "%s", archive_error_string(bsdtar->diskreader));
+ 		if (r < ARCHIVE_WARN)
+ 			continue;
+ 
+Index: cpio/cpio.c
+===================================================================
+--- cpio/cpio.c	(revision 1693)
++++ cpio/cpio.c	(working copy)
+@@ -326,7 +326,7 @@
+ 		cpio->mode = 'i';
+ 	/* -t requires -i */
+ 	if (cpio->option_list && cpio->mode != 'i')
+-		lafe_errc(1, 0, "Option -t requires -i", cpio->mode);
++		lafe_errc(1, 0, "Option -t requires -i");
+ 	/* -n requires -it */
+ 	if (cpio->option_numeric_uid_gid && !cpio->option_list)
+ 		lafe_errc(1, 0, "Option -n requires -it");
+@@ -493,7 +493,7 @@
+ 		lafe_errc(1, 0, "Requested compression not available");
+ 	r = archive_write_set_format_by_name(cpio->archive, cpio->format);
+ 	if (r != ARCHIVE_OK)
+-		lafe_errc(1, 0, archive_error_string(cpio->archive));
++		lafe_errc(1, 0, "%s", archive_error_string(cpio->archive));
+ 	archive_write_set_bytes_per_block(cpio->archive, cpio->bytes_per_block);
+ 	cpio->linkresolver = archive_entry_linkresolver_new();
+ 	archive_entry_linkresolver_set_strategy(cpio->linkresolver,
+@@ -504,7 +504,7 @@
+ 	 */
+ 	r = archive_write_open_file(cpio->archive, cpio->filename);
+ 	if (r != ARCHIVE_OK)
+-		lafe_errc(1, 0, archive_error_string(cpio->archive));
++		lafe_errc(1, 0, "%s", archive_error_string(cpio->archive));
+ 	lr = lafe_line_reader("-", cpio->option_null);
+ 	while ((p = lafe_line_reader_next(lr)) != NULL)
+ 		file_to_archive(cpio, p);
+@@ -525,7 +525,7 @@
+ 
+ 	r = archive_write_close(cpio->archive);
+ 	if (r != ARCHIVE_OK)
+-		lafe_errc(1, 0, archive_error_string(cpio->archive));
++		lafe_errc(1, 0, "%s", archive_error_string(cpio->archive));
+ 
+ 	if (!cpio->quiet) {
+ 		int64_t blocks =
+@@ -562,9 +562,9 @@
+ 	r = archive_read_disk_entry_from_file(cpio->archive_read_disk,
+ 	    entry, -1, NULL);
+ 	if (r < ARCHIVE_WARN)
+-		lafe_errc(1, 0, archive_error_string(cpio->archive));
++		lafe_errc(1, 0, "%s", archive_error_string(cpio->archive));
+ 	if (r < ARCHIVE_OK)
+-		lafe_warnc(0, archive_error_string(cpio->archive));
++		lafe_warnc(0, "%s", archive_error_string(cpio->archive));
+ 
+ 	if (cpio->uid_override >= 0)
+ 		archive_entry_set_uid(entry, cpio->uid_override);
+@@ -665,7 +665,7 @@
+ 		archive_entry_free(t);
+ 		if (r != ARCHIVE_OK)
+ 			lafe_warnc(archive_errno(cpio->archive),
+-			    archive_error_string(cpio->archive));
++			    "%s", archive_error_string(cpio->archive));
+ 		if (r == ARCHIVE_FATAL)
+ 			exit(1);
+ #ifdef EXDEV
+@@ -713,7 +713,7 @@
+ 			    cpio->buff, bytes_read);
+ 			if (r < 0)
+ 				lafe_errc(1, archive_errno(cpio->archive),
+-				    archive_error_string(cpio->archive));
++				    "%s", archive_error_string(cpio->archive));
+ 			if (r < bytes_read) {
+ 				lafe_warnc(0,
+ 				    "Truncated write; file may have grown while being archived.");
+@@ -802,7 +802,7 @@
+ 		lafe_errc(1, 0, "Couldn't allocate restore object");
+ 	r = archive_write_disk_set_options(ext, cpio->extract_flags);
+ 	if (r != ARCHIVE_OK)
+-		lafe_errc(1, 0, archive_error_string(ext));
++		lafe_errc(1, 0, "%s", archive_error_string(ext));
+ 	a = archive_read_new();
+ 	if (a == NULL)
+ 		lafe_errc(1, 0, "Couldn't allocate archive object");
+@@ -811,14 +811,14 @@
+ 
+ 	if (archive_read_open_file(a, cpio->filename, cpio->bytes_per_block))
+ 		lafe_errc(1, archive_errno(a),
+-		    archive_error_string(a));
++		    "%s", archive_error_string(a));
+ 	for (;;) {
+ 		r = archive_read_next_header(a, &entry);
+ 		if (r == ARCHIVE_EOF)
+ 			break;
+ 		if (r != ARCHIVE_OK) {
+ 			lafe_errc(1, archive_errno(a),
+-			    archive_error_string(a));
++			    "%s", archive_error_string(a));
+ 		}
+ 		if (lafe_excluded(cpio->matching, archive_entry_pathname(entry)))
+ 			continue;
+@@ -848,10 +848,10 @@
+ 	}
+ 	r = archive_read_close(a);
+ 	if (r != ARCHIVE_OK)
+-		lafe_errc(1, 0, archive_error_string(a));
++		lafe_errc(1, 0, "%s", archive_error_string(a));
+ 	r = archive_write_close(ext);
+ 	if (r != ARCHIVE_OK)
+-		lafe_errc(1, 0, archive_error_string(ext));
++		lafe_errc(1, 0, "%s", archive_error_string(ext));
+ 	if (!cpio->quiet) {
+ 		int64_t blocks = (archive_position_uncompressed(a) + 511)
+ 			      / 512;
+@@ -887,7 +887,7 @@
+ 		r = archive_write_data_block(aw, block, size, offset);
+ 		if (r != ARCHIVE_OK) {
+ 			lafe_warnc(archive_errno(aw),
+-			    archive_error_string(aw));
++			    "%s", archive_error_string(aw));
+ 			return (r);
+ 		}
+ 	}
+@@ -908,14 +908,14 @@
+ 
+ 	if (archive_read_open_file(a, cpio->filename, cpio->bytes_per_block))
+ 		lafe_errc(1, archive_errno(a),
+-		    archive_error_string(a));
++		    "%s", archive_error_string(a));
+ 	for (;;) {
+ 		r = archive_read_next_header(a, &entry);
+ 		if (r == ARCHIVE_EOF)
+ 			break;
+ 		if (r != ARCHIVE_OK) {
+ 			lafe_errc(1, archive_errno(a),
+-			    archive_error_string(a));
++			    "%s", archive_error_string(a));
+ 		}
+ 		if (lafe_excluded(cpio->matching, archive_entry_pathname(entry)))
+ 			continue;
+@@ -926,7 +926,7 @@
+ 	}
+ 	r = archive_read_close(a);
+ 	if (r != ARCHIVE_OK)
+-		lafe_errc(1, 0, archive_error_string(a));
++		lafe_errc(1, 0, "%s", archive_error_string(a));
+ 	if (!cpio->quiet) {
+ 		int64_t blocks = (archive_position_uncompressed(a) + 511)
+ 			      / 512;
+@@ -1036,7 +1037,7 @@
+ 		lafe_errc(1, 0, "Failed to allocate archive object");
+ 	r = archive_write_disk_set_options(cpio->archive, cpio->extract_flags);
+ 	if (r != ARCHIVE_OK)
+-		lafe_errc(1, 0, archive_error_string(cpio->archive));
++		lafe_errc(1, 0, "%s", archive_error_string(cpio->archive));
+ 	cpio->linkresolver = archive_entry_linkresolver_new();
+ 	archive_write_disk_set_standard_lookup(cpio->archive);
+ 
+@@ -1057,7 +1058,7 @@
+ 	archive_entry_linkresolver_free(cpio->linkresolver);
+ 	r = archive_write_close(cpio->archive);
+ 	if (r != ARCHIVE_OK)
+-		lafe_errc(1, 0, archive_error_string(cpio->archive));
++		lafe_errc(1, 0, "%s", archive_error_string(cpio->archive));
+ 
+ 	if (!cpio->quiet) {
+ 		int64_t blocks =

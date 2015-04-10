@@ -1,0 +1,431 @@
+diff -r 08212d4d17c1 configure.ac
+--- a/configure.ac	Mon Feb 22 13:12:35 2010 +0900
++++ b/configure.ac	Sun Feb 21 22:48:57 2010 +0900
+@@ -193,7 +193,7 @@
+ AC_HEADER_DIRENT
+ AC_HEADER_SYS_WAIT
+ AC_CHECK_HEADERS([acl/libacl.h attr/xattr.h copyfile.h ctype.h errno.h])
+-AC_CHECK_HEADERS([ext2fs/ext2_fs.h fcntl.h grp.h])
++AC_CHECK_HEADERS([ext2fs/ext2_fs.h fcntl.h iconv.h grp.h])
+ AC_CHECK_HEADERS([inttypes.h io.h langinfo.h limits.h])
+ AC_CHECK_HEADERS([linux/fiemap.h linux/fs.h])
+ AC_CHECK_HEADERS([locale.h paths.h poll.h pwd.h regex.h signal.h stdarg.h])
+@@ -311,6 +311,7 @@
+       fi
+   fi
+ fi
++AC_CHECK_LIB(iconv,libiconv)
+ 
+ # TODO: Give the user the option of using a pre-existing system
+ # libarchive.  This will define HAVE_LIBARCHIVE which will cause
+diff -r 08212d4d17c1 libarchive/archive_entry.c
+--- a/libarchive/archive_entry.c	Mon Feb 22 13:12:35 2010 +0900
++++ b/libarchive/archive_entry.c	Sun Feb 21 22:48:57 2010 +0900
+@@ -209,11 +209,24 @@
+ {
+ 	if (aes->aes_set & AES_SET_UTF8)
+ 		return (aes->aes_utf8.s);
++#if defined(__STDC_ISO_10646__) || defined(_WIN32) || defined(__APPLE__)
+ 	if ((aes->aes_set & AES_SET_WCS)
+ 	    && archive_strappend_w_utf8(&(aes->aes_utf8), aes->aes_wcs) != NULL) {
+ 		aes->aes_set |= AES_SET_UTF8;
+ 		return (aes->aes_utf8.s);
+ 	}
++#endif
++	if ((aes->aes_set & AES_SET_MBS)) {
++		char *p;
++
++		p = __archive_string_cs(&(aes->aes_mbs), "UTF-8");
++		if (p != NULL) {
++			aes->aes_set |= AES_SET_UTF8;
++			archive_strcpy(&(aes->aes_utf8), p);
++			free(p);
++			return (aes->aes_utf8.s);
++		}
++	}
+ 	return (NULL);
+ }
+ 
+@@ -263,6 +276,7 @@
+ 		free(w);
+ 	}
+ 
++#if defined(__STDC_ISO_10646__) || defined(_WIN32) || defined(__APPLE__)
+ 	if (aes->aes_set & AES_SET_UTF8) {
+ 		/* Try converting UTF8 to WCS. */
+ 		aes->aes_wcs = __archive_string_utf8_w(&(aes->aes_utf8));
+@@ -270,6 +284,7 @@
+ 			aes->aes_set |= AES_SET_WCS;
+ 		return (aes->aes_wcs);
+ 	}
++#endif
+ 	return (NULL);
+ }
+ 
+@@ -332,6 +347,7 @@
+ 	 * then UTF-8->WCS and Unicode->MBS conversions will both
+ 	 * succeed.) */
+ 
++#if defined(__STDC_ISO_10646__) || defined(_WIN32) || defined(__APPLE__)
+ 	/* Try converting UTF8 to WCS, return false on failure. */
+ 	aes->aes_wcs = __archive_string_utf8_w(&(aes->aes_utf8));
+ 	if (aes->aes_wcs == NULL)
+@@ -341,6 +357,16 @@
+ 	/* Try converting WCS to MBS, return false on failure. */
+ 	if (archive_strappend_w_mbs(&(aes->aes_mbs), aes->aes_wcs) == NULL)
+ 		return (0);
++#else
++	/* Try converting UTF8 to MBS, return false on failure. */
++	if (archive_strappend_cs(&(aes->aes_mbs), aes->aes_utf8.s,
++	    aes->aes_utf8.length, "UTF-8") == NULL)
++		return (0);
++	aes->aes_set = AES_SET_UTF8 | AES_SET_MBS; /* Both UTF8 and MBS set. */
++	aes->aes_wcs = aes_get_wcs(aes);
++	if (aes->aes_wcs == NULL)
++		return (0);
++#endif
+ 	aes->aes_set = AES_SET_UTF8 | AES_SET_WCS | AES_SET_MBS;
+ 
+ 	/* All conversions succeeded. */
+diff -r 08212d4d17c1 libarchive/archive_string.c
+--- a/libarchive/archive_string.c	Mon Feb 22 13:12:35 2010 +0900
++++ b/libarchive/archive_string.c	Sun Feb 21 22:48:57 2010 +0900
+@@ -43,9 +43,16 @@
+ #if defined(_WIN32) && !defined(__CYGWIN__)
+ #include <windows.h>
+ #endif
++#ifdef HAVE_ICONV_H
++#include <iconv.h>                      
++#endif
++#ifdef HAVE_LANGINFO_H
++#include <langinfo.h>
++#endif
+ 
+ #include "archive_private.h"
+ #include "archive_string.h"
++#include "archive_endian.h"
+ 
+ struct archive_string *
+ __archive_string_append(struct archive_string *as, const char *p, size_t s)
+@@ -230,6 +237,32 @@
+ 	return (return_val);
+ }
+ 
++#if defined(_WIN32) && !defined(__CYGWIN__)
++/*
++ * Return a wide-character string by converting this archive_string
++ * from UTF-8.
++ */
++wchar_t *
++__archive_string_utf8_w(struct archive_string *as)
++{
++	wchar_t *ws;
++	int n;
++
++	ws = (wchar_t *)malloc((as->length + 1) * sizeof(wchar_t));
++	if (ws == NULL)
++		__archive_errx(1, "Out of memory");
++	n = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
++		as->s, (int)as->length, ws, (int)as->length);
++	if (n == 0) {
++		free(ws);
++		return (NULL);
++	}
++	ws[n] = L'\0';
++	return (ws);
++}
++
++#else
++
+ static int
+ utf8_to_unicode(int *pwc, const char *s, size_t n)
+ {
+@@ -346,6 +379,8 @@
+ 	return (ws);
+ }
+ 
++#endif /* _WIN32 && ! __CYGWIN__ */
++
+ #if defined(_WIN32) && !defined(__CYGWIN__)
+ 
+ /*
+@@ -451,3 +486,202 @@
+ }
+ 
+ #endif /* _WIN32 && ! __CYGWIN__ */
++
++/*
++ * Returns a current charset name
++ */
++static void
++get_current_charset(char *cc, int size)
++{
++#if defined(HAVE_NL_LANGINFO) && defined(CODESET)
++	strncpy(cc, nl_langinfo(CODESET), size-1);
++#elif defined(_WIN32)
++	switch (GetACP()) {
++	case CP_UTF7:
++	    strncpy(cc, "UTF-7", size-1);
++	    break;
++	case CP_UTF8:
++	    strncpy(cc, "UTF-8", size-1);
++	    break;
++	default:
++	    sprintf_s(cc, size, "CP%d", GetACP());
++	    break;
++	}
++#else
++	strncpy(cc, "C", size-1);
++#endif
++	cc[size-1] = '\0';
++}
++
++#ifdef HAVE_LIBICONV
++
++static int
++my_iconv(const char *fromtype, size_t fromsize, const char *frombuf,
++    const char *totype, size_t *tosize, char **tobuf)
++{
++	iconv_t cd;
++	const char *inbuf;
++	char *outbuf, *outbufptr;
++	size_t inbytes;
++	size_t outbytes, outbufsize;
++	size_t r;
++
++	*tosize = 0;
++	*tobuf = NULL;
++	cd = iconv_open(totype, fromtype);
++	if (cd == (iconv_t)-1)
++		return (-1);
++	inbytes = fromsize;
++	inbuf = frombuf;
++	outbytes = outbufsize = inbytes * 4 + 1;
++	outbuf = outbufptr = malloc(outbufsize);
++	if (outbuf == NULL)
++		__archive_errx(1, "Out of memory");
++	r = iconv(cd, &inbuf, &inbytes, &outbuf, &outbytes);
++	if (r == (size_t)-1) {
++		free(outbufptr);
++		return (-1);
++	}
++	if (iconv_close(cd) == -1) {
++		free(outbufptr);
++		return (-1);
++	}
++
++	*tosize = outbufsize - outbytes;
++	*tobuf = outbufptr;
++	return (0);
++}
++
++#elif defined(_WIN32)
++/* TODO : Use mlang.dll instead of MultiByteToWideChar and
++ *	  WideCharToMultiByte.
++ */
++static int
++my_iconv(const char *fromtype, size_t fromsize, const char *frombuf,
++    const char *totype, size_t *tosize, char **tobuf)
++{
++	const char cc[32];
++
++	get_current_charset(cc, sizeof(cc));
++	*tosize = 0;
++	*tobuf = NULL;
++	if (strcmp(fromtype, cc) == 0 && strcmp(totype, "UTF-8") == 0) {
++		/* Converts a current locale string to a UTF-8 string */
++		char *mbs;
++		wchar_t *ws;
++		int mbl, wl;
++
++		ws = malloc(fromsize * sizeof(wchar_t));
++		if (ws == NULL)
++			__archive_errx(1, "Out of memory");
++		wl = MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS,
++		    frombuf, fromsize, ws, fromsize);
++		if (wl == 0)
++			return (-1);
++		mbl = (wl + 1) * sizeof(wchar_t);
++		mbs = malloc(mbl);
++		mbl = WideCharToMultiByte(CP_UTF8, 0, ws, wl, mbs, mbl, NULL,
++		    NULL);
++		free(ws);
++		if (mbl == 0) {
++			free(mbs);
++			return (-1);
++		}
++		*tobuf = mbs;
++		*tosize = mbl;
++		return (0);
++	else if (strcmp(fromtype, "UTF-8") == 0 && strcmp(totype, cc) == 0) {
++		/* Converts a UTF-8 string to a current locale string */
++		char *mbs;
++		wchar_t *ws;
++		int mbl, wl;
++		BOOL useDefaultChar = FALSE;
++
++		ws = malloc(fromsize * sizeof(wchar_t));
++		if (ws == NULL)
++			__archive_errx(1, "Out of memory");
++		wl = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
++		    (LPCSTR)frombuf, fromsize, (LPWSTR)ws, fromsize);
++		if (wl == 0)
++			return (NULL);
++		mbl = (wl + 1) * sizeof(wchar_t);
++		mbs = malloc(mbl);
++		mbl = WideCharToMultiByte(CP_ACP, 0, ws, wl, mbs, mbl, NULL,
++		    &useDefaultChar);
++		free(ws);
++		if (mbl == 0 || useDefaultChar) {
++			free(mbs);
++			return (-1);
++		}
++		*tobuf = mbs;
++		*tosize = mbl;
++		return (0);
++	} else
++		return -1;
++}
++
++#else
++/* This case is that system does not have character converting
++ * function yet. */
++static int
++my_iconv(const char *fromtype, size_t fromsize, const char *frombuf,
++    const char *totype, size_t *tosize, char **tobuf)
++{
++
++	*tosize = 0;
++	*tobuf = NULL;
++
++	return -1;
++}
++
++#endif	/* HAVE_LIBICONV */
++
++/*
++ * Translates a multi-byte character string from a specific charset into
++ * current locale character set and appends to the archive_string.
++ * Note: returns NULL if conversion fails.
++ */
++struct archive_string *
++__archive_strappend_cs(struct archive_string *as, const char *p, size_t s,
++    const char *cs)
++{
++	struct archive_string *ras;
++	char cc[32];
++	char *out;
++	size_t outsize;
++	int r;
++
++	get_current_charset(cc, sizeof(cc));
++	if (cs == NULL || strcmp(cs, cc) == 0)
++		return __archive_string_append(as, p, s);
++	r = my_iconv(cs, s, p, cc, &outsize, &out);
++	if (r < 0)
++		return (NULL);
++	ras = __archive_string_append(as, out, outsize);
++	free(out);
++	return (ras);
++}
++
++/*
++ * Returns a multi-byte string that archive_string translated from current
++ * locale character set into specific codset.
++ */
++char *
++__archive_string_cs(struct archive_string *as, const char *cs)
++{
++	char cc[32];
++	char *out;
++	size_t outsize;
++	int r;
++
++	if (as->length == 0 || as->s == NULL)
++		return (NULL);
++	get_current_charset(cc, sizeof(cc));
++	if (cs == NULL || strcmp(cs, cc) == 0)
++		return strdup(as->s);
++	r = my_iconv(cc, as->length, as->s, cs, &outsize, &out);
++	if (r < 0)
++		return (NULL);
++	out[outsize] = '\0';
++	return (out);
++}
+diff -r 08212d4d17c1 libarchive/archive_string.h
+--- a/libarchive/archive_string.h	Mon Feb 22 13:12:35 2010 +0900
++++ b/libarchive/archive_string.h	Sun Feb 21 22:48:57 2010 +0900
+@@ -81,6 +81,16 @@
+ __archive_strappend_w_mbs(struct archive_string *, const wchar_t *);
+ #define	archive_strappend_w_mbs	__archive_strappend_w_mbs
+ 
++/*
++ * Converts a multi-byte character string from specific codset to current
++ * locale character set and appends to the archive_string.
++ */
++/* Returns NULL if conversion fails. */
++struct archive_string *
++__archive_strappend_cs(struct archive_string *, const char *, size_t,
++    const char *);
++#define	archive_strappend_cs	__archive_strappend_cs
++
+ /* Basic append operation. */
+ struct archive_string *
+ __archive_string_append(struct archive_string *as, const char *p, size_t s);
+@@ -144,5 +154,11 @@
+  * Returns NULL if conversion failed in any way. */
+ wchar_t *__archive_string_utf8_w(struct archive_string *as);
+ 
++/* Allocates a fresh buffer and converts from current locale character set to
++ * specific codeset and puts it into buffer.
++ * Returns NULL if conversion failed in any way. */
++char *
++__archive_string_cs(struct archive_string *as, const char *cs);
++
+ 
+ #endif
+diff -r 08212d4d17c1 libarchive/archive_write_set_format_pax.c
+--- a/libarchive/archive_write_set_format_pax.c	Mon Feb 22 13:12:35 2010 +0900
++++ b/libarchive/archive_write_set_format_pax.c	Sun Feb 21 22:48:57 2010 +0900
+@@ -208,6 +208,7 @@
+ 	add_pax_attr(as, key, format_int(tmp + sizeof(tmp) - 1, value));
+ }
+ 
++#if defined(__STDC_ISO_10646__) || defined(_WIN32) || defined(__APPLE__)
+ static char *
+ utf8_encode(const wchar_t *wval)
+ {
+@@ -297,6 +298,21 @@
+ 
+ 	return (utf8_value);
+ }
++#else
++static char *
++utf8_encode(const wchar_t *wval)
++{
++	struct archive_string mbs;
++	char *utf8;
++
++	archive_string_init(&mbs);
++	if (archive_strappend_w_mbs(&mbs, wval) == NULL)
++		return (NULL);
++	utf8 = __archive_string_cs(&mbs, "UTF-8");
++	archive_string_free(&mbs);
++	return (utf8);
++}
++#endif /* __STDC_ISO_10646__ */
+ 
+ static void
+ add_pax_attr_w(struct archive_string *as, const char *key, const wchar_t *wval)
+diff -r 08212d4d17c1 libarchive/test/main.c
+--- a/libarchive/test/main.c	Mon Feb 22 13:12:35 2010 +0900
++++ b/libarchive/test/main.c	Sun Feb 21 22:48:57 2010 +0900
+@@ -496,7 +496,7 @@
+     void *extra)
+ {
+ 	assertion_count(file, line);
+-	if (v1 == v2 || wcscmp(v1, v2) == 0)
++	if (v1 != NULL && v2 != NULL && (v1 == v2 || wcscmp(v1, v2) == 0))
+ 		return (1);
+ 	failure_start(file, line, "%s != %s", e1, e2);
+ 	wcsdump(e1, v1);

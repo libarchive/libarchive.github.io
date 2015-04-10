@@ -1,0 +1,22 @@
+Index: libarchive/archive_write_set_format_by_name.c
+===================================================================
+--- libarchive/archive_write_set_format_by_name.c	(revision 2024)
++++ libarchive/archive_write_set_format_by_name.c	(working copy)
+@@ -48,6 +48,7 @@
+ 	{ "arbsd",	archive_write_set_format_ar_bsd },
+ 	{ "argnu",	archive_write_set_format_ar_svr4 },
+ 	{ "arsvr4",	archive_write_set_format_ar_svr4 },
++	{ "bsdtar",	archive_write_set_format_pax_restricted },
+ 	{ "cd9660",	archive_write_set_format_iso9660 },
+ 	{ "cpio",	archive_write_set_format_cpio },
+ 	{ "iso",	archive_write_set_format_iso9660 },
+@@ -56,7 +57,9 @@
+ 	{ "newc",	archive_write_set_format_cpio_newc },
+ 	{ "odc",	archive_write_set_format_cpio },
+ 	{ "pax",	archive_write_set_format_pax },
++	{ "paxr",	archive_write_set_format_pax_restricted },
+ 	{ "posix",	archive_write_set_format_pax },
++	{ "rpax",	archive_write_set_format_pax_restricted },
+ 	{ "shar",	archive_write_set_format_shar },
+ 	{ "shardump",	archive_write_set_format_shar_dump },
+ 	{ "ustar",	archive_write_set_format_ustar },
